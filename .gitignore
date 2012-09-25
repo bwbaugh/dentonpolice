@@ -1,0 +1,26 @@
+############
+## Project
+############
+
+# Downloaded mug shot images
+mugs/
+
+# Log files
+dentonpolice_*.txt
+dentonpolice_*.html
+
+
+############
+## Libraries
+############
+
+twython3k/
+httplib2/
+oauth2/
+
+
+#############
+## Python
+#############
+
+*.py[co]
