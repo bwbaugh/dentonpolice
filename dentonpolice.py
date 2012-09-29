@@ -549,7 +549,7 @@ if __name__ == '__main__':
     while True:
         try:
             main()
-            logging.debug("Main loop: going to sleep for {} seconds",
+            logging.debug("Main loop: going to sleep for %s seconds",
                           SECONDS_BETWEEN_CHECKS)
             time.sleep(SECONDS_BETWEEN_CHECKS)
         except KeyboardInterrupt:

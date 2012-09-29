@@ -5,16 +5,17 @@ via TwitPic.
 The City Jail Custody Report page that we are scraping is available here:
 http://dpdjailview.cityofdenton.com/
 
-Configuration is first required in order to post to TwitPic or Twitter.
+Configuration is first required in order to post to TwitPic or Twitter. Without configuration the program will still scrape mug shots and log the images and inmate information to disk.
 
 If run as __main__, will loop and continuously check the report page.
 To run only once, execute this module's main() function.
 
-Required Libraries
-twython3k: https://github.com/ryanmcgrath/twython
-    Which in turn requires:
-    httplib2: https://github.com/pakt/httplib2/tree/master/python3
-    oauth2: https://github.com/hades/python-oauth2/tree/python3
+Required Libraries for Optional Functionality
+For posting status messages to Twitter (record number of inmates seen in jail at one time):
+    twython3k: https://github.com/ryanmcgrath/twython
+        Which in turn requires:
+        httplib2: https://github.com/pakt/httplib2/tree/master/python3
+        oauth2: https://github.com/hades/python-oauth2/tree/python3
 
 Tor and Proxy
 By default the script retrieves the jail custody report page using a
