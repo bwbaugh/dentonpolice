@@ -392,6 +392,7 @@ def find_missing(inmates, recent_inmates):
         A list of inmates that appear to be missing and that were likely
         not logged during previous page checks.
     """
+    logger = logging.getLogger('find_missing')
     # Since we try not to log inmates that don't have charges listed,
     # make sure that any inmate on the recent list that doesn't appear
     # on the current page get logged even if they don't have charges.
