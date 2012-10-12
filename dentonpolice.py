@@ -50,7 +50,7 @@ except ImportError:
 
 # TwitPic image upload email address.
 # Used to post mug shot and accompanying caption to TwitPic.
-TWITPIC_ADDRESS = ''
+TWITPIC_EMAIL_ADDRESS = ''
 
 # Twitter account info.
 # Used to post most number of inmates in jail at once information.
@@ -310,7 +310,7 @@ def post_twitpic(inmates):
     for inmate in inmates:
         message = inmate.get_twitter_message()
         logger.info('Posting to TwitPic (ID: %s)', inmate.id)
-        mail(to=TWITPIC_EMAIL,
+        mail(to=TWITPIC_EMAIL_ADDRESS,
              subject=message, # Caption
              text=repr(inmate), # Serves as a log that can later be loaded in.
              attach="mugs/{}".format(most_recent_mug(inmate)))
@@ -531,7 +531,7 @@ def main():
         inmates = [inmate for inmate in inmates if inmate.mug]
         # Log and post to TwitPic
         log_inmates(inmates)
-        if TWITPIC_ADDRESS and mail is not None:
+        if TWITPIC_EMAIL_ADDRESS and mail is not None:
             post_twitpic(inmates)
     # Save the most recent list of inmates to the log for next time
     log_inmates(inmates_original, recent=True)

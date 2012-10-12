@@ -36,7 +36,7 @@ def mail(to, subject, text, attach):
    """Send an email with attachment."""
    msg = MIMEMultipart()
 
-   msg['From'] = gmail_user
+   msg['From'] = GMAIL_USER
    msg['To'] = to
    msg['Subject'] = subject
 
