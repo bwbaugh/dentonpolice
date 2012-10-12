@@ -10,8 +10,8 @@
 """Sends an email with an attachment via SMTP using gmail servers.
 
 Configuration:
-   gmail_user: String of the gmail acount username to use.
-   gmail_pwd: String of the gmail acount password to use.
+   GMAIL_USER: String of the gmail acount username to use.
+   GMAIL_PWD: String of the gmail acount password to use.
 """
 import smtplib
 from email.mime.multipart import MIMEMultipart
@@ -23,9 +23,9 @@ import os
 
 # Configuration
 
-gmail_user = ''
-gmail_pwd = ""
-if not gmail_user or not gmail_pwd:
+GMAIL_USER = ''
+GMAIL_PWD = ""
+if not GMAIL_USER or not GMAIL_PWD:
    raise ImportError
 
 SMTP_SERVER = 'smtp.gmail.com'
@@ -49,11 +49,11 @@ def mail(to, subject, text, attach):
            'attachment; filename="%s"' % os.path.basename(attach))
    msg.attach(part)
 
-   mailServer = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
-   mailServer.ehlo()
-   mailServer.starttls()
-   mailServer.ehlo()
-   mailServer.login(gmail_user, gmail_pwd)
-   mailServer.sendmail(gmail_user, to, msg.as_string())
-   # Should be mailServer.quit(), but that crashes...
-   mailServer.close()
+   mail_server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+   mail_server.ehlo()
+   mail_server.starttls()
+   mail_server.ehlo()
+   mail_server.login(GMAIL_USER, GMAIL_PWD)
+   mail_server.sendmail(GMAIL_USER, to, msg.as_string())
+   # Should be mail_server.quit(), but that crashes...
+   mail_server.close()

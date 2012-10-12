@@ -94,7 +94,7 @@ class Inmate(object):
         for key in kwargs:
             setattr(self, key, kwargs[key])
 
-    def getTwitterMessage(self):
+    def get_twitter_message(self):
         """Constructs a mug shot caption """
         parts = []
         # Append arrest time
@@ -140,7 +140,7 @@ class Inmate(object):
         return str(dict((k, v) for (k, v) in vars(self).items() if k != 'mug'))
 
 
-def getJailReport():
+def get_jail_report():
     """Retrieves the Denton City Jail Custody Report webpage."""
     logger = logging.getLogger('JailReport')
     logger.debug("Getting Jail Report")
@@ -156,9 +156,9 @@ def getJailReport():
     return html
 
 
-def getMugShots(inmates):
+def get_mug_shots(inmates):
     """Retrieves the mug shot for each Inmate and stores it in the Inmate."""
-    logger = logging.getLogger('getMugShots')
+    logger = logging.getLogger('get_mug_shots')
     logger.debug("Getting mug shots")
     for inmate in inmates:
         try:
@@ -173,7 +173,7 @@ def getMugShots(inmates):
                 inmate.mug = None
 
 
-def saveMugShots(inmates):
+def save_mug_shots(inmates):
     """Saves the mug shot image data to a file for each Inmate.
 
     Mug shots are saved by the Inmate's ID.
@@ -184,7 +184,7 @@ def saveMugShots(inmates):
     Args:
         inmates: List of Inmate objects to be processed.
     """
-    logger = logging.getLogger('saveMugShots')
+    logger = logging.getLogger('save_mug_shots')
     path = "mugs/"
     # Make mugs/ folder
     try:
@@ -230,7 +230,7 @@ def saveMugShots(inmates):
             f.write(inmate.mug)
 
 
-def logInmates(inmates, recent=False, mode='a'):
+def log_inmates(inmates, recent=False, mode='a'):
     """Log to file all Inmate information excluding mug shot image data.
 
     Args:
@@ -239,7 +239,7 @@ def logInmates(inmates, recent=False, mode='a'):
             Specifying True will overwrite the separate recent log, which
             is representative of the inmates seen during the last check.
     """
-    logger = logging.getLogger('logInmates')
+    logger = logging.getLogger('log_inmates')
     if recent:
         location = 'dentonpolice_recent.txt'
         mode = 'w'
@@ -254,7 +254,7 @@ def logInmates(inmates, recent=False, mode='a'):
             f.write(repr(inmate) + '\n')
 
 
-def readLog(recent=False):
+def read_log(recent=False):
     """Loads Inmate information from log to re-create Inmate objects.
 
     Mug shot data is not retrieved, neither from file nor server.
@@ -265,7 +265,7 @@ def readLog(recent=False):
             is representative of the inmates seen during the last check.
             While this is not the default, it is the option most used.
     """
-    logger = logging.getLogger('readLog')
+    logger = logging.getLogger('read_log')
     if recent:
         location = 'dentonpolice_recent.txt'
     else:
@@ -286,7 +286,7 @@ def readLog(recent=False):
     return inmates
 
 
-def mostRecentMug(inmate):
+def most_recent_mug(inmate):
     """Returns the filename of the most recent mug shot for the Inmate.
 
     Args:
@@ -300,28 +300,29 @@ def mostRecentMug(inmate):
     return best
 
 
-def postTwitPic(inmates):
+def post_twitpic(inmates):
     """Posts to TwitPic each inmate using their mug shot and caption.
 
     Args:
         inmates: List of Inmate objects to be processed.
     """
+    logger = logging.getLogger('post_twitpic')
     for inmate in inmates:
-        message = inmate.getTwitterMessage()
-        logging.info('Posting to TwitPic (ID: %s)', inmate.id)
+        message = inmate.get_twitter_message()
+        logger.info('Posting to TwitPic (ID: %s)', inmate.id)
         mail(to=TWITPIC_EMAIL,
              subject=message, # Caption
              text=repr(inmate), # Serves as a log that can later be loaded in.
-             attach="mugs/{}".format(mostRecentMug(inmate)))
+             attach="mugs/{}".format(most_recent_mug(inmate)))
 
 
-def getMostInmatesCount():
+def get_most_inmates_count():
     """Returns the filename of the most recent mug shot for the Inmate.
 
     Returns:
         A tuple with the last most_count and the on_date when that occurred.
     """
-    logger = logging.getLogger('getMostInmatesCount')
+    logger = logging.getLogger('get_most_inmates_count')
     most_count, on_date = (None, None)
     try:
         with open('dentonpolice_most.txt', mode='r') as f:
@@ -338,9 +339,9 @@ def getMostInmatesCount():
     return (most_count, on_date)
 
 
-def logMostInmatesCount(count):
+def log_most_inmates_count(count):
     """Logs to file the most-count and the current date."""
-    logger = logging.getLogger('logMostInmatesCount')
+    logger = logging.getLogger('log_most_inmates_count')
     now = now = datetime.datetime.now().strftime('%m/%d/%y %H:%M:%S')
     logger.info('Logging most inmates count at %s on %s', count, now)
     with open('dentonpolice_most.txt', mode='w') as f:
@@ -401,7 +402,7 @@ def find_missing(inmates, recent_inmates):
     missing = []
     for recent in recent_inmates:
         potential = False
-        if not recent.charges or not mostRecentMug(recent):
+        if not recent.charges or not most_recent_mug(recent):
             potential = True
         elif (len(recent.charges) == 1 and
               re.search(r'WARRANT(?:S)?\Z', recent.charges[0]['charge'])):
@@ -424,8 +425,8 @@ def find_missing(inmates, recent_inmates):
                 missing.append(recent)
                 # if couldn't download the mug before and missing now,
                 # go ahead and log it for future reference
-                if not mostRecentMug(recent):
-                    logInmates([recent])
+                if not most_recent_mug(recent):
+                    log_inmates([recent])
     if len(missing) > 0:
         logger.info("Found %s inmates without charges that are now missing",
                     len(missing))
@@ -451,7 +452,7 @@ def tweet_most_count(count):
                       oauth_token=OAUTH_TOKEN,
                       oauth_token_secret=OAUTH_TOKEN_SECRET)
     twitter.updateStatus(status=message)
-    logMostInmatesCount(count)
+    log_most_inmates_count(count)
 
 
 def main():
@@ -463,7 +464,7 @@ def main():
     logger = logging.getLogger('main')
     # Get the Jail Report webpage
     try:
-        html = getJailReport()
+        html = get_jail_report()
     except urllib.error.HTTPError as e:
         # Service Unavailable
         if e.code == 503:
@@ -478,7 +479,7 @@ def main():
     # Parse list of inmates from webpage
     inmates = parse_inmates(html)
     # Load the list of inmates seen last time we got the page
-    recent_inmates = readLog(recent=True)
+    recent_inmates = read_log(recent=True)
     # Find inmates that no longer appear on the page that may not be logged.
     missing = find_missing(inmates, recent_inmates)
     # Make a copy of the current parsed inmates to use later
@@ -513,29 +514,29 @@ def main():
     # We now have our final list of inmates, so let's process them.
     if inmates:
         try:
-            getMugShots(inmates)
+            get_mug_shots(inmates)
         except urllib.error.HTTPError as e:
             # Service Unavailable
             if e.code == 503:
                 reason = "HTTP Error 503: Service Unavailable"
             else:
                 reason = e
-            logger.warning("getMugShots: %s", reason)
+            logger.warning("get_mug_shots: %s", reason)
             return
         except http.client.HTTPException as e:
-            logger.warning("getMugShots: %s", e)
+            logger.warning("get_mug_shots: %s", e)
             return
-        saveMugShots(inmates)
+        save_mug_shots(inmates)
         # Discard inmates that we couldn't save a mug shot for.
         inmates = [inmate for inmate in inmates if inmate.mug]
         # Log and post to TwitPic
-        logInmates(inmates)
+        log_inmates(inmates)
         if TWITPIC_ADDRESS and mail is not None:
-            postTwitPic(inmates)
+            post_twitpic(inmates)
     # Save the most recent list of inmates to the log for next time
-    logInmates(inmates_original, recent=True)
+    log_inmates(inmates_original, recent=True)
     # Check if there is a new record number of inmates seen on the jail report.
-    (most_count, on_date) = getMostInmatesCount()
+    (most_count, on_date) = get_most_inmates_count()
     count = len(inmates_original)
     if not most_count or count > most_count:
         if (Twython is not None and
