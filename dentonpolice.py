@@ -65,10 +65,10 @@ OAUTH_TOKEN_SECRET = ''
 #   and if so be sure to use whatever port it is listening on (such as 8123).
 PROXY_PORT = 8118
 # Use a proxy; in this case set to use Polipo (through Tor)
-proxy_support = urllib.request.ProxyHandler({'http' :
+proxy_support = urllib.request.ProxyHandler({'http':
                                              '127.0.0.1:'
                                              '{}'.format(PROXY_PORT)})
-opener = urllib.request.build_opener(proxy_support) 
+opener = urllib.request.build_opener(proxy_support)
 opener.addheaders = [('User-agent', 'Mozilla/5.0')]
 
 # How often to check the City Jail Custody Report webpage
@@ -111,7 +111,7 @@ class Inmate(object):
                 if charge['amount']:
                     bond += int(float(charge['amount'][1:]))
             if bond:
-                locale.setlocale( locale.LC_ALL, '' )
+                locale.setlocale(locale.LC_ALL, '')
                 bond = locale.currency(bond, grouping=True)[:-3]
                 parts.append("Bond: " + bond)
         # Append list of charges
@@ -129,7 +129,7 @@ class Inmate(object):
             charge['charge'] = re.sub(r'\s{2,}', r' ', charge['charge'])
             parts.append(charge['charge'])
         return ' | '.join(parts)
-            
+
     def __str__(self):
         """String representation of the Inmate formatted with pprint."""
         return pprint.pformat(dict((k, v) for (k, v) in vars(self).items()
@@ -311,8 +311,8 @@ def post_twitpic(inmates):
         message = inmate.get_twitter_message()
         logger.info('Posting to TwitPic (ID: %s)', inmate.id)
         mail(to=TWITPIC_EMAIL_ADDRESS,
-             subject=message, # Caption
-             text=repr(inmate), # Serves as a log that can later be loaded in.
+             subject=message,  # Caption
+             text=repr(inmate),  # Serves as a log that can later be loaded in.
              attach="mugs/{}".format(most_recent_mug(inmate)))
 
 
@@ -354,12 +354,12 @@ def parse_inmates(html):
     _dlInmates_lblDOB_\d+">(?P<DOB>.*?)</span>.*?
     _dlInmates_Label2_\d*">(?P<arrest>.*?)</span>.*?
     ImageHandler\.ashx\?imageId=(?P<id>\d+)&amp;type=thumb
-    """, re.DOTALL|re.X)
+    """, re.DOTALL | re.X)
     charges_pattern = re.compile(r"""
     _dlInmates_Charges_\d+_lblCharge_\d+">(?P<charge>.*?)</span>.*?
     _dlInmates_Charges_\d+_lblBondOrFine_\d+">(?P<type>.*?)</span>.*?
     _dlInmates_Charges_\d+_lblAmount_\d+">(?P<amount>.*?)</span>
-    """, re.DOTALL|re.X)
+    """, re.DOTALL | re.X)
     inmates = []
     for inmate in inmate_pattern.finditer(html):
         data = inmate.groupdict()
@@ -433,7 +433,7 @@ def find_missing(inmates, recent_inmates):
     return missing
 
 
-def tweet_most_count(count):
+def tweet_most_count(count, most_count):
     """Tweet that we have seen the most number of inmates in jail at once."""
     logger = logging.getLogger('tweet_most_count')
     logger.info('Posting new record of %s inmates', count)
@@ -484,7 +484,7 @@ def main():
     missing = find_missing(inmates, recent_inmates)
     # Make a copy of the current parsed inmates to use later
     inmates_original = inmates[:]
-    # Discard recent inmates with no charges listed 
+    # Discard recent inmates with no charges listed
     recent_inmates = [recent for recent in recent_inmates if recent.charges]
     # Compare the current list with the list read last time (recent) and
     # get rid of duplicates (already logged inmates). Also discard inmates
@@ -542,7 +542,7 @@ def main():
         if (Twython is not None and
             TWITTER_TOKEN and TWITTER_SECRET and
             OAUTH_TOKEN and OAUTH_TOKEN_SECRET):
-            tweet_most_count(count)
+            tweet_most_count(count, most_count)
 
 
 if __name__ == '__main__':
