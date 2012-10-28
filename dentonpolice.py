@@ -433,7 +433,7 @@ def find_missing(inmates, recent_inmates):
     return missing
 
 
-def tweet_most_count(count, most_count):
+def tweet_most_count(count, most_count, on_date):
     """Tweet that we have seen the most number of inmates in jail at once."""
     logger = logging.getLogger('tweet_most_count')
     logger.info('Posting new record of %s inmates', count)
@@ -442,7 +442,7 @@ def tweet_most_count(count, most_count):
     now = datetime.datetime.now().strftime('%m/%d/%y %H:%M:%S')
     message = ('New Record: {} inmates listed in jail '
                'as of {}.').format(count, now)
-    if most_count:
+    if most_count and on_date:
         message += ' Last record was {} inmates on {}'.format(most_count,
                                                               on_date)
     if len(message) + len(jail_url) + 1 <= 140:
@@ -542,7 +542,7 @@ def main():
         if (Twython is not None and
             TWITTER_TOKEN and TWITTER_SECRET and
             OAUTH_TOKEN and OAUTH_TOKEN_SECRET):
-            tweet_most_count(count, most_count)
+            tweet_most_count(count, most_count, on_date)
 
 
 if __name__ == '__main__':
