@@ -16,33 +16,33 @@ Configuration is first required in order to post to TwitPic or Twitter.
 If run as __main__, will loop and continuously check the report page.
 To run only once, execute this module's main() function.
 """
+import ast
+import datetime
+import errno
+import fnmatch
+import locale
+import logging
+import os
+import pprint
+import re
+import sys
+import time
+import http.client
 import urllib
 import urllib.error
 import urllib.request
-import http.client
-import logging
-import os
-import sys
-import re
-import pprint
-import datetime
-import ast
-import errno
-import time
-import locale
-import fnmatch
 
 try:
     from twython3k import Twython
 except ImportError:
     print('Unable to load Twitter library. Disabling Twitter features.',
-           file=sys.stderr)
+          file=sys.stderr)
     Twython = None
 try:
     from gmail_dentonpolice import mail
 except ImportError:
     print('Unable to load gmail library. Disabling submitting to TwitPic.',
-           file=sys.stderr)
+          file=sys.stderr)
     mail = None
 
 
@@ -209,12 +209,12 @@ def save_mug_shots(inmates):
             else:
                 for filename in os.listdir(path):
                     if (fnmatch.fnmatch(filename, '{}_*.jpg'.format(inmate.id))
-                        and os.path.getsize(filename) == len(inmate.mug)):
+                            and os.path.getsize(filename) == len(inmate.mug)):
                         logger.debug("Skipping save of mug shot (ID: %s)",
                                      inmate.id)
                         continue
                 logger.debug("Saving mug shot under alternate filename "
-                      "(ID: {})".format(inmate.id))
+                             "(ID: {})".format(inmate.id))
                 location = (path + inmate.id + '_' +
                             datetime.datetime.now().strftime("%y%m%d%H%M%S") +
                             '.jpg')
@@ -246,7 +246,7 @@ def log_inmates(inmates, recent=False, mode='a'):
     else:
         location = 'dentonpolice_log.txt'
     logger.debug("Saving inmates to {} log".format("recent" if recent
-                                                    else "standard"))
+                                                   else "standard"))
     with open(location, mode=mode, encoding='utf-8') as f:
         for inmate in inmates:
             if not recent:
@@ -540,8 +540,8 @@ def main():
     count = len(inmates_original)
     if not most_count or count > most_count:
         if (Twython is not None and
-            TWITTER_TOKEN and TWITTER_SECRET and
-            OAUTH_TOKEN and OAUTH_TOKEN_SECRET):
+                TWITTER_TOKEN and TWITTER_SECRET and
+                OAUTH_TOKEN and OAUTH_TOKEN_SECRET):
             tweet_most_count(count, most_count, on_date)
 
 
