@@ -26,6 +26,7 @@ import logging
 import os
 import pprint
 import re
+import smtplib
 import socket
 import sys
 import time
@@ -322,10 +323,15 @@ def post_twitpic(inmates):
     for inmate in inmates:
         message = inmate.get_twitter_message()
         logger.info('Posting to TwitPic (ID: %s)', inmate.id)
-        mail(to=TWITPIC_EMAIL_ADDRESS,
-             subject=message,  # Caption
-             text=repr(inmate),  # Serves as a log that can later be loaded in.
-             attach="mugs/{}".format(most_recent_mug(inmate)))
+        try:
+            mail(to=TWITPIC_EMAIL_ADDRESS,
+                 subject=message,  # Caption
+                 text=repr(inmate),  # Serves as a log that can later be loaded.
+                 attach="mugs/{}".format(most_recent_mug(inmate)))
+        except smtplib.SMTPDataError:
+            inmate.posted = False
+        else:
+            inmate.posted = True
 
 
 def get_most_inmates_count():
@@ -552,8 +558,13 @@ def main():
             except socket.gaierror:
                 logger.warning("post_twitpic: socket.gaierror")
                 return
-    # Save the most recent list of inmates to the log for next time
-    log_inmates(inmates_original, recent=True)
+        # Remove any inmates that failed to post so they're retried.
+        posted = inmates_original[:]
+        for inmate in inmates:
+            if not inmate.posted:
+                posted = [x for x in posted if x.id != inmate.id]
+        # Save the most recent list of inmates to the log for next time
+        log_inmates(posted, recent=True)
     # Check if there is a new record number of inmates seen on the jail report.
     (most_count, on_date) = get_most_inmates_count()
     count = len(inmates_original)
