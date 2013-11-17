@@ -128,7 +128,18 @@ class Inmate(object):
             # collapse multiple spaces
             charge['charge'] = re.sub(r'\s{2,}', r' ', charge['charge'])
             parts.append(charge['charge'])
-        return ' | '.join(parts)
+        message = ' | '.join(parts)
+        # Petition link, if enough space.
+        # petition = (
+        #     'https://www.change.org/petitions/'
+        #     'denton-police-department-make-mug-shots-available-on-request-'
+        #     'instead-of-putting-all-of-them-online'
+        # )
+        petition = 't.co/rWrSAYThKV'
+        if len(message) > 140 - 24:
+            return message
+        else:
+            return ' '.join([message, petition])
 
     def __str__(self):
         """String representation of the Inmate formatted with pprint."""
