@@ -72,7 +72,7 @@ opener = urllib.request.build_opener(proxy_support)
 opener.addheaders = [('User-agent', 'Mozilla/5.0')]
 
 # How often to check the City Jail Custody Report webpage
-SECONDS_BETWEEN_CHECKS = 60
+SECONDS_BETWEEN_CHECKS = 60 * 2
 
 # Logging level
 logging.basicConfig(level=logging.INFO)
