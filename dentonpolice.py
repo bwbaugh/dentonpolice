@@ -20,14 +20,15 @@ import ast
 import datetime
 import errno
 import fnmatch
+import http.client
 import locale
 import logging
 import os
 import pprint
 import re
+import socket
 import sys
 import time
-import http.client
 import urllib
 import urllib.error
 import urllib.request
@@ -487,6 +488,9 @@ def main():
     except http.client.HTTPException as e:
         logger.error("JailReport: %s", e)
         return
+    except urllib.error.URLError as e:
+        logger.error("JailReport: %s", e)
+        return
     # Parse list of inmates from webpage
     inmates = parse_inmates(html)
     # Load the list of inmates seen last time we got the page
@@ -543,7 +547,11 @@ def main():
         # Log and post to TwitPic
         log_inmates(inmates)
         if TWITPIC_EMAIL_ADDRESS and mail is not None:
-            post_twitpic(inmates)
+            try:
+                post_twitpic(inmates)
+            except socket.gaierror:
+                logger.warning("post_twitpic: socket.gaierror")
+                return
     # Save the most recent list of inmates to the log for next time
     log_inmates(inmates_original, recent=True)
     # Check if there is a new record number of inmates seen on the jail report.
