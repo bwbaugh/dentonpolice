@@ -41,7 +41,7 @@ except ImportError:
           file=sys.stderr)
     Twython = None
 try:
-    from gmail_dentonpolice import mail
+    from dentonpolice.gmail import mail
 except ImportError:
     print('Unable to load gmail library. Disabling submitting to TwitPic.',
           file=sys.stderr)
@@ -579,16 +579,15 @@ def main():
             tweet_most_count(count, most_count, on_date)
 
 
-if __name__ == '__main__':
-    # Continuously checks the custody report page every SECONDS_BETWEEN_CHECKS.
-    logging.info("Starting main loop.")
-    while True:
-        try:
-            main()
-            logging.debug("Main loop: going to sleep for %s seconds",
-                          SECONDS_BETWEEN_CHECKS)
-            time.sleep(SECONDS_BETWEEN_CHECKS)
-        except KeyboardInterrupt:
-            print("Bye!")
-            logging.shutdown()
-            break
+# Continuously checks the custody report page every SECONDS_BETWEEN_CHECKS.
+logging.info("Starting main loop.")
+while True:
+    try:
+        main()
+        logging.debug("Main loop: going to sleep for %s seconds",
+                      SECONDS_BETWEEN_CHECKS)
+        time.sleep(SECONDS_BETWEEN_CHECKS)
+    except KeyboardInterrupt:
+        print("Bye!")
+        logging.shutdown()
+        break
