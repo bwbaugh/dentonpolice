@@ -62,10 +62,10 @@ OAUTH_TOKEN = ''
 OAUTH_TOKEN_SECRET = ''
 
 # Proxy setup
+# If Polipo isn't running, you might need to start it manually after Tor,
+# and if so be sure to use whatever port it is listening on (such as 8123).
 # The default port for Polipo used in the Tor Vidalia Bundle is 8118.
-#   If Polipo isn't running, you might need to start it manually after Tor,
-#   and if so be sure to use whatever port it is listening on (such as 8123).
-PROXY_PORT = 8118
+PROXY_PORT = 8123
 # Use a proxy; in this case set to use Polipo (through Tor)
 proxy_support = urllib.request.ProxyHandler({'http':
                                              '127.0.0.1:'
