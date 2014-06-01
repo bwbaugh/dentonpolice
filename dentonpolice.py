@@ -490,13 +490,13 @@ def main():
             reason = "HTTP Error 503: Service Unavailable"
         else:
             reason = e
-        logger.error("JailReport: %s", reason)
+        logger.error("JailReport: %r", reason)
         return
     except http.client.HTTPException as e:
-        logger.error("JailReport: %s", e)
+        logger.error("JailReport: %r", e)
         return
     except urllib.error.URLError as e:
-        logger.error("JailReport: %s", e)
+        logger.error("JailReport: %r", e)
         return
     # Parse list of inmates from webpage
     inmates = parse_inmates(html)
@@ -543,10 +543,10 @@ def main():
                 reason = "HTTP Error 503: Service Unavailable"
             else:
                 reason = e
-            logger.warning("get_mug_shots: %s", reason)
+            logger.warning("get_mug_shots: %r", reason)
             return
         except http.client.HTTPException as e:
-            logger.warning("get_mug_shots: %s", e)
+            logger.warning("get_mug_shots: %r", e)
             return
         save_mug_shots(inmates)
         # Discard inmates that we couldn't save a mug shot for.
