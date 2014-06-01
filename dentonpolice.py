@@ -330,6 +330,7 @@ def post_twitpic(inmates):
                  attach="mugs/{}".format(most_recent_mug(inmate)))
         except smtplib.SMTPDataError:
             inmate.posted = False
+            logger.warning('SMTPDataError for {id}'.format(id=inmate.id))
         else:
             inmate.posted = True
 
