@@ -77,7 +77,10 @@ opener.addheaders = [('User-agent', 'Mozilla/5.0')]
 SECONDS_BETWEEN_CHECKS = 60 * 2
 
 # Logging level
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+)
 
 
 class Inmate(object):
