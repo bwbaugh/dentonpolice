@@ -10,6 +10,9 @@ import locale
 import pprint
 import re
 
+URL_LENGTH = 23  # Assume HTTPS, otherwise HTTP is 22.
+TWEET_LIMIT = 140 - URL_LENGTH  # The mug shot is included as a link.
+
 
 class Inmate(object):
     """Storage class to hold name, DOB, charge, etc.
@@ -61,7 +64,12 @@ class Inmate(object):
             # collapse multiple spaces
             charge['charge'] = re.sub(r'\s{2,}', r' ', charge['charge'])
             parts.append(charge['charge'])
-        message = ' | '.join(parts)
+        message = '\n'.join(parts)
+        # Truncate to TWEET_LIMIT, otherwise we will get HTTP 403 when
+        # submitting to Twitter for the status being over 140 chars.
+        # TODO(bwbaugh|2014-06-01): Truncate outside of this method, or
+        # make it a kwarg option.
+        message = message[:TWEET_LIMIT]
         # Petition link, if enough space.
         # petition = (
         #     'https://www.change.org/petitions/'
@@ -69,10 +77,18 @@ class Inmate(object):
         #     'instead-of-putting-all-of-them-online'
         # )
         petition = 't.co/rWrSAYThKV'
-        if len(message) > 140 - 24:
+        # Check that there is room for the URI. PLus one for '\n'.
+        if len(message) > TWEET_LIMIT - (URL_LENGTH + 1):
             return message
         else:
-            return ' '.join([message, petition])
+            message_with_petition = '\n'.join([message, petition])
+            if len(message_with_petition) > 140:
+                # TODO(bwbaugh|2014-06-01): Remove sanity check after
+                # comfortable with results. Really need unit tests. :(
+                raise AssertionError(
+                    message, len(message), petition, len(petition),
+                )
+            return message_with_petition
 
     def __str__(self):
         """String representation of the Inmate formatted with pprint."""
