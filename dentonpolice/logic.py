@@ -13,8 +13,6 @@ import http.client
 import logging
 import os
 import re
-import smtplib
-import socket
 import sys
 import urllib
 import urllib.error
@@ -30,17 +28,9 @@ except ImportError:
 
 from dentonpolice import config_dict
 from dentonpolice.inmate import Inmate
-try:
-    from dentonpolice.gmail import mail
-except ImportError:
-    sys.stderr.write(
-        'Unable to load gmail library. Disabling submitting to TwitPic.\n'
-    )
-    mail = None
 
 
 # Load the config values here to get a KeyError as early as possible.
-TWITPIC_EMAIL_ADDRESS = config_dict['twitpic email address']
 APP_KEY = config_dict['twitter']['API key']
 APP_SECRET = config_dict['twitter']['API secret']
 OAUTH_TOKEN = config_dict['twitter']['Access token']
@@ -240,27 +230,42 @@ def most_recent_mug(inmate):
     return best
 
 
-def post_twitpic(inmates):
-    """Posts to TwitPic each inmate using their mug shot and caption.
+def tweet_mug_shots(inmates):
+    """Posts to Twitter each inmate using their mug shot and caption.
 
     Args:
         inmates: List of Inmate objects to be processed.
     """
-    logger = logging.getLogger('post_twitpic')
+    logger = logging.getLogger('tweet_mug_shots')
+    twitter = Twython(
+        app_key=APP_KEY,
+        app_secret=APP_SECRET,
+        oauth_token=OAUTH_TOKEN,
+        oauth_token_secret=OAUTH_TOKEN_SECRET,
+    )
     for inmate in inmates:
+        logger.info('Posting to Twitter (ID: %s)', inmate.id)
         caption = inmate.get_twitter_message()
-        logger.info('Posting to TwitPic (ID: %s)', inmate.id)
+        logger.debug('Status: {status!r}'.format(status=caption))
+        mug_shot_fname = 'mugs/{}'.format(most_recent_mug(inmate))
+        logger.debug('Media fname: {fname}'.format(fname=mug_shot_fname))
         try:
-            mail(
-                to=TWITPIC_EMAIL_ADDRESS,
-                subject=caption,
-                # Serves as a log that can later be loaded.
-                text=repr(inmate),
-                attach="mugs/{}".format(most_recent_mug(inmate)),
-            )
-        except smtplib.SMTPDataError:
+            with open(mug_shot_fname, mode='rb') as mug_shot_file:
+                twitter.update_status_with_media(
+                    status=caption,
+                    media=mug_shot_file,
+                )
+        except Exception as error:
             inmate.posted = False
-            logger.warning('SMTPDataError for {id}'.format(id=inmate.id))
+            logger.error(
+                'Exception while trying to tweet ID-{id}: {error!r}'.format(
+                    id=inmate.id,
+                    error=error,
+                )
+            )
+            # TODO(bwbaugh|2014-06-01): Change to handle known types of
+            # exceptions without having to re-raise.
+            raise
         else:
             inmate.posted = True
 
@@ -497,14 +502,12 @@ def main():
         save_mug_shots(inmates)
         # Discard inmates that we couldn't save a mug shot for.
         inmates = [inmate for inmate in inmates if inmate.mug]
-        # Log and post to TwitPic
+        # Log and post to Twitter.
         log_inmates(inmates)
-        if TWITPIC_EMAIL_ADDRESS and mail is not None:
-            try:
-                post_twitpic(inmates)
-            except socket.gaierror:
-                logger.warning("post_twitpic: socket.gaierror")
-                return
+        if (Twython is not None and
+                APP_KEY and APP_SECRET and
+                OAUTH_TOKEN and OAUTH_TOKEN_SECRET):
+            tweet_mug_shots(inmates)
         # Remove any inmates that failed to post so they're retried.
         posted = inmates_original[:]
         for inmate in inmates:

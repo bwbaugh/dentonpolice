@@ -18,17 +18,10 @@ import yaml
 
 # Start with defaults in case the user doesn't provide any.
 config_dict = {
-    'email': {
-        'server': '',
-        'port': 587,
-        'user': '',
-        'password': '',
-    },
     'proxy': {
         'host': '127.0.0.1',
         'port': 8123,
     },
-    'twitpic email address': '',
     'twitter': {
         'API key': '',
         'API secret': '',
