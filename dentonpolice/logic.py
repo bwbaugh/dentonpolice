@@ -28,6 +28,7 @@ except ImportError:
     )
     Twython = None
 
+from dentonpolice import config_dict
 from dentonpolice.inmate import Inmate
 try:
     from dentonpolice.gmail import mail
@@ -38,25 +39,24 @@ except ImportError:
     mail = None
 
 
-# TwitPic image upload email address.
-# Used to post mug shot and accompanying caption to TwitPic.
-TWITPIC_EMAIL_ADDRESS = ''
+# Load the config values here to get a KeyError as early as possible.
+TWITPIC_EMAIL_ADDRESS = config_dict['twitpic email address']
+APP_KEY = config_dict['twitter']['API key']
+APP_SECRET = config_dict['twitter']['API secret']
+OAUTH_TOKEN = config_dict['twitter']['Access token']
+OAUTH_TOKEN_SECRET = config_dict['twitter']['Access token secret']
 
-# Twitter account info.
-# Used to post most number of inmates in jail at once information.
-APP_KEY = ''
-APP_SECRET = ''
-OAUTH_TOKEN = ''
-OAUTH_TOKEN_SECRET = ''
 
 # Proxy setup
 # If Polipo isn't running, you might need to start it manually after Tor,
 # and if so be sure to use whatever port it is listening on (such as 8123).
 # The default port for Polipo used in the Tor Vidalia Bundle is 8118.
-PROXY_PORT = 8123
 # Use a proxy; in this case set to use Polipo (through Tor)
 proxy_support = urllib.request.ProxyHandler({
-    'http': '127.0.0.1:{port}'.format(port=PROXY_PORT)
+    'http': '{host}:{port}'.format(
+        host=config_dict['proxy']['host'],
+        port=config_dict['proxy']['port'],
+    )
 })
 opener = urllib.request.build_opener(proxy_support)
 opener.addheaders = [('User-agent', 'Mozilla/5.0')]

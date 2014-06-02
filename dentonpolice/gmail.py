@@ -13,30 +13,30 @@ Configuration:
     GMAIL_USER: String of the gmail acount username to use.
     GMAIL_PWD: String of the gmail acount password to use.
 """
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.base import MIMEBase
-from email.mime.text import MIMEText
-from email import encoders
 import os
+import smtplib
+from email import encoders
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+from dentonpolice import config_dict
 
 
-# Configuration
-
-GMAIL_USER = ""
-GMAIL_PWD = ""
-if not GMAIL_USER or not GMAIL_PWD:
+# Load the config values here to get a KeyError as early as possible.
+SMTP_SERVER = config_dict['email']['user']
+SMTP_PORT = config_dict['email']['user']
+SMTP_USER = config_dict['email']['user']
+SMTP_PWD = config_dict['email']['user']
+if not (SMTP_SERVER and SMTP_PORT and SMTP_USER and SMTP_PWD):
     raise ImportError
-
-SMTP_SERVER = 'smtp.gmail.com'
-SMTP_PORT = 587
 
 
 def mail(to, subject, text, attach):
     """Send an email with attachment."""
     msg = MIMEMultipart()
 
-    msg['From'] = GMAIL_USER
+    msg['From'] = SMTP_USER
     msg['To'] = to
     msg['Subject'] = subject
 
@@ -53,7 +53,7 @@ def mail(to, subject, text, attach):
     mail_server.ehlo()
     mail_server.starttls()
     mail_server.ehlo()
-    mail_server.login(GMAIL_USER, GMAIL_PWD)
-    mail_server.sendmail(GMAIL_USER, to, msg.as_string())
+    mail_server.login(SMTP_USER, SMTP_PWD)
+    mail_server.sendmail(SMTP_USER, to, msg.as_string())
     # Should be mail_server.quit(), but that crashes...
     mail_server.close()

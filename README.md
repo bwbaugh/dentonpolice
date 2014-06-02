@@ -25,6 +25,8 @@ Configuration is first required in order to post to TwitPic or Twitter.
 Without configuration the program will still scrape mug shots and log
 the images and inmate information to disk.
 
+Create `config.yaml` by using `config-example.yaml` as a guide.
+
 ### Invocation
 
 If the package is executed e.g., `python -m dentonpolice`, the script

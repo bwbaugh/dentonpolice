@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ############
 ## Project
 ############
@@ -8,6 +9,9 @@ mugs/
 # Log files
 dentonpolice_*.txt
 dentonpolice_*.html
+
+# Configuration file
+config.yaml
 
 
 #############
