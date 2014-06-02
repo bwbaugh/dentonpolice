@@ -49,7 +49,6 @@ proxy_support = urllib.request.ProxyHandler({
     )
 })
 opener = urllib.request.build_opener(proxy_support)
-opener.addheaders = [('User-agent', 'Mozilla/5.0')]
 
 
 def get_jail_report():
