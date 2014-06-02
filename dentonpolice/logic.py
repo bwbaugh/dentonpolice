@@ -393,7 +393,6 @@ def tweet_most_count(count, most_count, on_date):
     logger = logging.getLogger('tweet_most_count')
     logger.info('Posting new record of %s inmates', count)
     # Post to twitter and log
-    jail_url = Twython.shortenURL('http://dpdjailview.cityofdenton.com/')
     now = datetime.datetime.now().strftime('%m/%d/%y %H:%M:%S')
     message = (
         'New Record: {count} inmates listed in jail as of {time}.'.format(
@@ -406,6 +405,9 @@ def tweet_most_count(count, most_count, on_date):
             count=most_count,
             date=on_date,
         )
+    # TODO(bwbaugh|2014-06-01): Twitter will auto shorten the URL, so
+    # we might be able to use a smaller length here.
+    jail_url = 'http://dpdjailview.cityofdenton.com/'
     if len(message) + len(jail_url) + 1 <= 140:
         message += ' ' + jail_url.decode('utf-8')
     twitter = Twython(
