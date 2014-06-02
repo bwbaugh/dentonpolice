@@ -416,7 +416,7 @@ def tweet_most_count(count, most_count, on_date):
         oauth_token=OAUTH_TOKEN,
         oauth_token_secret=OAUTH_TOKEN_SECRET,
     )
-    twitter.updateStatus(status=message)
+    twitter.update_status(status=message)
     log_most_inmates_count(count)
 
 
