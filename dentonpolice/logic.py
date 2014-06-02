@@ -265,7 +265,13 @@ def tweet_mug_shots(inmates):
             )
             # TODO(bwbaugh|2014-06-01): Change to handle known types of
             # exceptions without having to re-raise.
-            raise
+            if str(error).endswith('Status is a duplicate.'):
+                # Should only happen when recovering the script after
+                # fixing / handling an error.
+                logger.warn('Status is a duplicate. Suppressing error')
+                inmate.posted = True
+            else:
+                raise
         else:
             inmate.posted = True
 
