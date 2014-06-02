@@ -11,6 +11,14 @@ here: <http://dpdjailview.cityofdenton.com/>
 Usage
 -----
 
+### Installation
+
+1. Create a venv using Python 3 e.g.,
+
+        virtualenv --no-site-packages --python `which python3` venv
+
+2. Install requirements e.g., `pip install -r requirements.txt`.
+
 ### Configuration
 
 Configuration is first required in order to post to TwitPic or Twitter.
@@ -22,18 +30,6 @@ the images and inmate information to disk.
 If the package is executed e.g., `python -m dentonpolice`, the script
 will loop and continuously check the report page. To run only once,
 execute the logic module's main() function.
-
-### Libraries
-
-Required Libraries for Optional Functionality
-
-For posting status messages to Twitter (record number of inmates seen
-in jail at one time):
-
--   `twython3k`: <https://github.com/ryanmcgrath/twython>
-    -   `httplib2`: <https://github.com/pakt/httplib2/tree/master/python3>
-    -   `oauth2`: <https://github.com/hades/python-oauth2/tree/python3>
-
 
 ### Tor and Proxy
 

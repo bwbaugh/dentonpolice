@@ -21,7 +21,7 @@ import urllib.error
 import urllib.request
 
 try:
-    from twython3k import Twython
+    from twython import Twython
 except ImportError:
     sys.stderr.write(
         'Unable to load Twitter library. Disabling Twitter features.\n'
@@ -44,8 +44,8 @@ TWITPIC_EMAIL_ADDRESS = ''
 
 # Twitter account info.
 # Used to post most number of inmates in jail at once information.
-TWITTER_TOKEN = ''
-TWITTER_SECRET = ''
+APP_KEY = ''
+APP_SECRET = ''
 OAUTH_TOKEN = ''
 OAUTH_TOKEN_SECRET = ''
 
@@ -409,8 +409,8 @@ def tweet_most_count(count, most_count, on_date):
     if len(message) + len(jail_url) + 1 <= 140:
         message += ' ' + jail_url.decode('utf-8')
     twitter = Twython(
-        twitter_token=TWITTER_TOKEN,
-        twitter_secret=TWITTER_SECRET,
+        app_key=APP_KEY,
+        app_secret=APP_SECRET,
         oauth_token=OAUTH_TOKEN,
         oauth_token_secret=OAUTH_TOKEN_SECRET,
     )
@@ -517,6 +517,6 @@ def main():
     count = len(inmates_original)
     if not most_count or count > most_count:
         if (Twython is not None and
-                TWITTER_TOKEN and TWITTER_SECRET and
+                APP_KEY and APP_SECRET and
                 OAUTH_TOKEN and OAUTH_TOKEN_SECRET):
             tweet_most_count(count, most_count, on_date)
