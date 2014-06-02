@@ -7,8 +7,9 @@ http://dpdjailview.cityofdenton.com/
 
 Configuration is first required in order to post to TwitPic or Twitter. Without configuration the program will still scrape mug shots and log the images and inmate information to disk.
 
-If run as __main__, will loop and continuously check the report page.
-To run only once, execute this module's main() function.
+If the package is executed e.g., `python -m dentonpolice`, the script
+will loop and continuously check the report page. To run only once,
+execute the logic module's main() function.
 
 Required Libraries for Optional Functionality
 For posting status messages to Twitter (record number of inmates seen in jail at one time):
