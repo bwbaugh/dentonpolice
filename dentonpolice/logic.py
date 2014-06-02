@@ -15,6 +15,7 @@ import os
 import re
 import smtplib
 import socket
+import sys
 import urllib
 import urllib.error
 import urllib.request
@@ -22,16 +23,18 @@ import urllib.request
 try:
     from twython3k import Twython
 except ImportError:
-    print('Unable to load Twitter library. Disabling Twitter features.',
-          file=sys.stderr)
+    sys.stderr.write(
+        'Unable to load Twitter library. Disabling Twitter features.\n'
+    )
     Twython = None
 
 from dentonpolice.inmate import Inmate
 try:
     from dentonpolice.gmail import mail
 except ImportError:
-    print('Unable to load gmail library. Disabling submitting to TwitPic.',
-          file=sys.stderr)
+    sys.stderr.write(
+        'Unable to load gmail library. Disabling submitting to TwitPic.\n'
+    )
     mail = None
 
 
@@ -52,9 +55,9 @@ OAUTH_TOKEN_SECRET = ''
 # The default port for Polipo used in the Tor Vidalia Bundle is 8118.
 PROXY_PORT = 8123
 # Use a proxy; in this case set to use Polipo (through Tor)
-proxy_support = urllib.request.ProxyHandler({'http':
-                                             '127.0.0.1:'
-                                             '{}'.format(PROXY_PORT)})
+proxy_support = urllib.request.ProxyHandler({
+    'http': '127.0.0.1:{port}'.format(port=PROXY_PORT)
+})
 opener = urllib.request.build_opener(proxy_support)
 opener.addheaders = [('User-agent', 'Mozilla/5.0')]
 
@@ -63,9 +66,6 @@ def get_jail_report():
     """Retrieves the Denton City Jail Custody Report webpage."""
     logger = logging.getLogger('JailReport')
     logger.debug("Getting Jail Report")
-    # Uncomment to read from file instead of LIVE web page
-##    with open('dentonpolice_recent.html') as f:
-##        return f.read()
     logger.debug("Opening URL")
     response = opener.open('http://dpdjailview.cityofdenton.com/')
     logger.debug("Reading page")
@@ -82,13 +82,18 @@ def get_mug_shots(inmates):
     for inmate in inmates:
         try:
             logger.debug("Opening mug shot URL (ID: {})".format(inmate.id))
-            response = opener.open("http://dpdjailview.cityofdenton.com/"
-                                   "ImageHandler.ashx?type=image&imageID=" + inmate.id)
+            uri = (
+                'http://dpdjailview.cityofdenton.com/'
+                'ImageHandler.ashx?type=image&imageID={mug_id}'
+            ).format(mug_id=inmate.id)
+            response = opener.open(uri)
             inmate.mug = response.read()
         except urllib.error.HTTPError as e:
             if e.code == 500:
-                logger.warning('Unable to retrieve: Internal Server Error '
-                               '(ID: %s)', inmate.id)
+                logger.warning(
+                    'Unable to retrieve: Internal Server Error (ID: %s)',
+                    inmate.id,
+                )
                 inmate.mug = None
 
 
@@ -129,19 +134,29 @@ def save_mug_shots(inmates):
                 for filename in os.listdir(path):
                     if (fnmatch.fnmatch(filename, '{}_*.jpg'.format(inmate.id))
                             and os.path.getsize(filename) == len(inmate.mug)):
-                        logger.debug("Skipping save of mug shot (ID: %s)",
-                                     inmate.id)
+                        logger.debug(
+                            "Skipping save of mug shot (ID: %s)",
+                            inmate.id,
+                        )
                         continue
-                logger.debug("Saving mug shot under alternate filename "
-                             "(ID: {})".format(inmate.id))
-                location = (path + inmate.id + '_' +
-                            datetime.datetime.now().strftime("%y%m%d%H%M%S") +
-                            '.jpg')
+                logger.debug(
+                    "Saving mug shot under alternate filename (ID: {})".format(
+                        inmate.id
+                    )
+                )
+                location = '{path}{inmate_id}_{timestamp}.jpg'.format(
+                    path=path,
+                    inmate_id=inmate.id,
+                    timestamp=datetime.datetime.now().strftime("%y%m%d%H%M%S"),
+                )
         except OSError as e:
             # No such file
             if e.errno == errno.ENOENT:
                 old_size = None
-                location = path + inmate.id + '.jpg'
+                location = '{path}{inmate_id}.jpg'.format(
+                    path=path,
+                    inmate_id=inmate.id,
+                )
             else:
                 raise
         # Save the mug shot
@@ -164,8 +179,11 @@ def log_inmates(inmates, recent=False, mode='a'):
         mode = 'w'
     else:
         location = 'dentonpolice_log.txt'
-    logger.debug("Saving inmates to {} log".format("recent" if recent
-                                                   else "standard"))
+    logger.debug(
+        'Saving inmates to {log_name} log'.format(
+            log_name='recent' if recent else 'standard',
+        )
+    )
     with open(location, mode=mode, encoding='utf-8') as f:
         for inmate in inmates:
             if not recent:
@@ -189,8 +207,11 @@ def read_log(recent=False):
         location = 'dentonpolice_recent.txt'
     else:
         location = 'dentonpolice_log.txt'
-    logger.debug("Reading inmates from {} log".format("recent" if recent else
-                                                      "standard"))
+    logger.debug(
+        'Reading inmates from {log_name} log'.format(
+            log_name='recent' if recent else 'standard',
+        )
+    )
     inmates = []
     try:
         with open(location, encoding='utf-8') as f:
@@ -227,13 +248,16 @@ def post_twitpic(inmates):
     """
     logger = logging.getLogger('post_twitpic')
     for inmate in inmates:
-        message = inmate.get_twitter_message()
+        caption = inmate.get_twitter_message()
         logger.info('Posting to TwitPic (ID: %s)', inmate.id)
         try:
-            mail(to=TWITPIC_EMAIL_ADDRESS,
-                 subject=message,  # Caption
-                 text=repr(inmate),  # Serves as a log that can later be loaded.
-                 attach="mugs/{}".format(most_recent_mug(inmate)))
+            mail(
+                to=TWITPIC_EMAIL_ADDRESS,
+                subject=caption,
+                # Serves as a log that can later be loaded.
+                text=repr(inmate),
+                attach="mugs/{}".format(most_recent_mug(inmate)),
+            )
         except smtplib.SMTPDataError:
             inmate.posted = False
             logger.warning('SMTPDataError for {id}'.format(id=inmate.id))
@@ -296,8 +320,11 @@ def parse_inmates(html):
             next_inmate = next_inmate.start()
         except:
             next_inmate = len(html)
-        for charge in charges_pattern.finditer(html, inmate.end(),
-                                               next_inmate):
+        for charge in charges_pattern.finditer(
+            html,
+            inmate.end(),
+            next_inmate,
+        ):
             charges.append(charge.groupdict())
         data['charges'] = charges
         # Store the current time as when seen
@@ -312,11 +339,12 @@ def find_missing(inmates, recent_inmates):
 
     Args:
         inmates: Current list of Inmates.
-        recent_inmates: List of Inmates seen during the previous page check.
+        recent_inmates: List of Inmates seen during the previous page
+            check.
 
     Returns:
-        A list of inmates that appear to be missing and that were likely
-        not logged during previous page checks.
+        A list of inmates that appear to be missing and that were
+        likely not logged during previous page checks.
     """
     logger = logging.getLogger('find_missing')
     # Since we try not to log inmates that don't have charges listed,
@@ -332,8 +360,8 @@ def find_missing(inmates, recent_inmates):
         elif (len(recent.charges) == 1 and
               re.search(r'WARRANT(?:S)?\Z', recent.charges[0]['charge'])):
             potential = True
-        # add if the inmate is missing from the current report or if the
-        # inmate has had their charge updated
+        # add if the inmate is missing from the current report or if
+        # the inmate has had their charge updated.
         if potential:
             found = False
             for inmate in inmates:
@@ -353,8 +381,10 @@ def find_missing(inmates, recent_inmates):
                 if not most_recent_mug(recent):
                     log_inmates([recent])
     if len(missing) > 0:
-        logger.info("Found %s inmates without charges that are now missing",
-                    len(missing))
+        logger.info(
+            "Found %s inmates without charges that are now missing",
+            len(missing),
+        )
     return missing
 
 
@@ -365,17 +395,25 @@ def tweet_most_count(count, most_count, on_date):
     # Post to twitter and log
     jail_url = Twython.shortenURL('http://dpdjailview.cityofdenton.com/')
     now = datetime.datetime.now().strftime('%m/%d/%y %H:%M:%S')
-    message = ('New Record: {} inmates listed in jail '
-               'as of {}.').format(count, now)
+    message = (
+        'New Record: {count} inmates listed in jail as of {time}.'.format(
+            count=count,
+            time=now,
+        )
+    )
     if most_count and on_date:
-        message += ' Last record was {} inmates on {}'.format(most_count,
-                                                              on_date)
+        message += ' Last record was {count} inmates on {date}'.format(
+            count=most_count,
+            date=on_date,
+        )
     if len(message) + len(jail_url) + 1 <= 140:
         message += ' ' + jail_url.decode('utf-8')
-    twitter = Twython(twitter_token=TWITTER_TOKEN,
-                      twitter_secret=TWITTER_SECRET,
-                      oauth_token=OAUTH_TOKEN,
-                      oauth_token_secret=OAUTH_TOKEN_SECRET)
+    twitter = Twython(
+        twitter_token=TWITTER_TOKEN,
+        twitter_secret=TWITTER_SECRET,
+        oauth_token=OAUTH_TOKEN,
+        oauth_token_secret=OAUTH_TOKEN_SECRET,
+    )
     twitter.updateStatus(status=message)
     log_most_inmates_count(count)
 
@@ -435,8 +473,10 @@ def main():
     for i in range(len(inmates)):
         for j in range(i + 1, len(inmates)):
             if inmates[i] and inmates[j] and inmates[i].id == inmates[j].id:
-                logger.warning('Removing duplicate found in inmates (ID: %s)',
-                               inmates[i].id)
+                logger.warning(
+                    'Removing duplicate found in inmates (ID: %s)',
+                    inmates[i].id,
+                )
                 inmates[i] = None
     inmates = [inmate for inmate in inmates if inmate]
     # We now have our final list of inmates, so let's process them.
