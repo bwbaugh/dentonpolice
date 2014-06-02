@@ -224,7 +224,10 @@ def most_recent_mug(inmate):
     """
     best = ''
     for filename in os.listdir('mugs/'):
-        if fnmatch.fnmatch(filename, '{}*.jpg'.format(inmate.id)):
+        # First conditional is for the original filename. The second
+        # conditional is for newer timestamps.
+        if (fnmatch.fnmatch(filename, '{}.jpg'.format(inmate.id)) or
+                fnmatch.fnmatch(filename, '{}_*.jpg'.format(inmate.id))):
             if filename > best:
                 best = filename
     return best
