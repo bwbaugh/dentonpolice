@@ -61,7 +61,7 @@ class Inmate(object):
             # collapse multiple spaces
             charge['charge'] = re.sub(r'\s{2,}', r' ', charge['charge'])
             parts.append(charge['charge'])
-        message = ' | '.join(parts)
+        message = '\n'.join(parts)
         # Petition link, if enough space.
         # petition = (
         #     'https://www.change.org/petitions/'
