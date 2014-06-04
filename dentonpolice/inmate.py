@@ -55,6 +55,7 @@ class Inmate(object):
         city_list = [
             'CORINTH',
             'DALLAS',
+            'DC',
             'DENTON',
             'DPD',
             'FLOWER MOUND',
