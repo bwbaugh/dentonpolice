@@ -60,6 +60,7 @@ class Inmate(object):
             'DECATUR',
             'DENTON',
             'DPD',
+            'EULESS',
             'FLOWER MOUND',
             'FRISCO',
             'LAKE DALLAS',
