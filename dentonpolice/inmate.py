@@ -79,7 +79,8 @@ class Inmate(object):
             charge['charge'] = re.sub(r'([<>])', r' \1 ', charge['charge'])
             # collapse multiple spaces
             charge['charge'] = re.sub(r'\s{2,}', r' ', charge['charge'])
-            parts.append(charge['charge'])
+            if charge['charge']:
+                parts.append(charge['charge'])
         message = '\n'.join(parts)
         # Truncate to TWEET_LIMIT, otherwise we will get HTTP 403 when
         # submitting to Twitter for the status being over 140 chars.
