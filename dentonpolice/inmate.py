@@ -35,11 +35,20 @@ class Inmate(object):
         parts = []
         # Append arrest time
         parts.append(self.arrest)
-        # Append age
+        # Append first name with age
+        last_name, first_name = [
+            name.strip()
+            for name in self.name.title().split(',', 1)
+        ]
         t1 = datetime.datetime.strptime(self.DOB, '%m/%d/%Y')
         t2 = datetime.datetime.strptime(self.arrest, '%m/%d/%Y %H:%M:%S')
         age = int((t2 - t1).days / 365.2425)
-        parts.append(str(age) + " yrs old")
+        parts.append(
+            '{first_name}, {age} yrs old'.format(
+                first_name=first_name,
+                age=age,
+            )
+        )
         # Append bond (if there is data)
         if self.charges:
             bond = 0
