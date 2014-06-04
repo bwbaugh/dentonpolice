@@ -57,6 +57,7 @@ class Inmate(object):
             'CORINTH',
             'DALLAS',
             'DC',
+            'DECATUR',
             'DENTON',
             'DPD',
             'FLOWER MOUND',
