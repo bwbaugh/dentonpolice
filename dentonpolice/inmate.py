@@ -52,8 +52,16 @@ class Inmate(object):
                 parts.append("Bond: " + bond)
         # Append list of charges
         # But first shorten the charge text
-        cities = (r'(?:DPD|DENTON|LAKE DALLAS|FRISCO|'
-                  r'DALLAS|CORINTH|RICHARDSON)*')
+        city_list = [
+            'CORINTH',
+            'DALLAS',
+            'DENTON',
+            'DPD',
+            'FRISCO',
+            'LAKE DALLAS',
+            'RICHARDSON',
+        ]
+        cities = '(?:{cities})*'.format(cities='|'.join(city_list))
         extras = r'\s*(?:CO)?\s*(?:SO)?\s*(?:PD)?\s*(?:WARRANT)?(?:S)?\s*/\s*'
         for charge in self.charges:
             charge['charge'] = re.sub(r'\A' + cities + extras,
