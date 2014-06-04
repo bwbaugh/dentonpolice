@@ -52,8 +52,24 @@ class Inmate(object):
                 parts.append("Bond: " + bond)
         # Append list of charges
         # But first shorten the charge text
-        cities = (r'(?:DPD|DENTON|LAKE DALLAS|FRISCO|'
-                  r'DALLAS|CORINTH|RICHARDSON)*')
+        city_list = [
+            'ARLINGTON',
+            'CORINTH',
+            'DALLAS',
+            'DC',
+            'DECATUR',
+            'DENTON',
+            'DPD',
+            'EULESS',
+            'FLOWER MOUND',
+            'FRISCO',
+            'LAKE DALLAS',
+            'LEWISVILLE',
+            'RICHARDSON',
+            'TARRANT',
+            'TDCJ',
+        ]
+        cities = '(?:{cities})*'.format(cities='|'.join(city_list))
         extras = r'\s*(?:CO)?\s*(?:SO)?\s*(?:PD)?\s*(?:WARRANT)?(?:S)?\s*/\s*'
         for charge in self.charges:
             charge['charge'] = re.sub(r'\A' + cities + extras,
@@ -63,7 +79,8 @@ class Inmate(object):
             charge['charge'] = re.sub(r'([<>])', r' \1 ', charge['charge'])
             # collapse multiple spaces
             charge['charge'] = re.sub(r'\s{2,}', r' ', charge['charge'])
-            parts.append(charge['charge'])
+            if charge['charge']:
+                parts.append(charge['charge'])
         message = '\n'.join(parts)
         # Truncate to TWEET_LIMIT, otherwise we will get HTTP 403 when
         # submitting to Twitter for the status being over 140 chars.
