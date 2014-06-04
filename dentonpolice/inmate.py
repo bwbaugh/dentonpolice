@@ -53,6 +53,7 @@ class Inmate(object):
         # Append list of charges
         # But first shorten the charge text
         city_list = [
+            'ARLINGTON',
             'CORINTH',
             'DALLAS',
             'DC',
