@@ -66,6 +66,7 @@ class Inmate(object):
             'LAKE DALLAS',
             'LEWISVILLE',
             'RICHARDSON',
+            'TARRANT',
             'TDCJ',
         ]
         cities = '(?:{cities})*'.format(cities='|'.join(city_list))
