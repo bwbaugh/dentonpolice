@@ -64,6 +64,7 @@ class Inmate(object):
             'FLOWER MOUND',
             'FRISCO',
             'LAKE DALLAS',
+            'LEWISVILLE',
             'RICHARDSON',
             'TDCJ',
         ]
