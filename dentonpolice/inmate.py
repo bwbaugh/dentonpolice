@@ -10,6 +10,9 @@ import locale
 import pprint
 import re
 
+from dentonpolice.zodiac import zodiac_emoji_for_date
+
+
 URL_LENGTH = 23  # Assume HTTPS, otherwise HTTP is 22.
 TWEET_LIMIT = 140 - URL_LENGTH  # The mug shot is included as a link.
 
@@ -47,9 +50,10 @@ class Inmate(object):
         )
         age = int((arrest_date - birth_date).days / 365.2425)
         parts.append(
-            '{first_name}, {age} yrs old'.format(
+            '{first_name}, {age} yrs old {zodiac}'.format(
                 first_name=first_name,
                 age=age,
+                zodiac=zodiac_emoji_for_date(birth_date)
             )
         )
         # Append bond (if there is data)
