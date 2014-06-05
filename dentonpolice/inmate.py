@@ -40,9 +40,12 @@ class Inmate(object):
             name.strip()
             for name in self.name.title().split(',', 1)
         ]
-        t1 = datetime.datetime.strptime(self.DOB, '%m/%d/%Y')
-        t2 = datetime.datetime.strptime(self.arrest, '%m/%d/%Y %H:%M:%S')
-        age = int((t2 - t1).days / 365.2425)
+        birth_date = datetime.datetime.strptime(self.DOB, '%m/%d/%Y')
+        arrest_date = datetime.datetime.strptime(
+            self.arrest,
+            '%m/%d/%Y %H:%M:%S',
+        )
+        age = int((arrest_date - birth_date).days / 365.2425)
         parts.append(
             '{first_name}, {age} yrs old'.format(
                 first_name=first_name,
