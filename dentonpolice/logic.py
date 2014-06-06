@@ -358,6 +358,45 @@ def parse_inmates(html):
     return inmates
 
 
+def extract_inmates_to_process(inmates):
+    """Filter the inmates and return only the ones that should be posted."""
+    logger = logging.getLogger('extract_inmates_to_process')
+    # Load the list of inmates seen last time we got the page
+    recent_inmates = read_log(recent=True)
+    # Find inmates that no longer appear on the page that may not be logged.
+    missing = find_missing(inmates, recent_inmates)
+    # Discard recent inmates with no charges listed
+    recent_inmates = [recent for recent in recent_inmates if recent.charges]
+    # Compare the current list with the list read last time (recent) and
+    # get rid of duplicates (already logged inmates). Also discard inmates
+    # that have no charges listed, or if the only charge is
+    # 'LOCAL MUNICIPAL WARRANT'.
+    # TODO(bwbaugh): Make this readable by converting to proper for-loopps.
+    inmates = [inmate for inmate in inmates
+               if inmate.charges and
+               not (len(inmate.charges) == 1 and
+                    re.search(r'WARRANT(?:S)?\Z', inmate.charges[0]['charge']))
+               and not any((recent.id == inmate.id) and
+                           (len(recent.charges) <= len(inmate.charges))
+                           for recent in recent_inmates)]
+    # Add to the current list those missing ones without charges that
+    # also need to be logged.
+    inmates.extend(missing)
+    # Double check that there are no duplicates.
+    # Note: this is needed due to programming logic error, but the code
+    # is getting complicated so in case I don't find the bug better to check.
+    for i in range(len(inmates)):
+        for j in range(i + 1, len(inmates)):
+            if inmates[i] and inmates[j] and inmates[i].id == inmates[j].id:
+                logger.warning(
+                    'Removing duplicate found in inmates (ID: %s)',
+                    inmates[i].id,
+                )
+                inmates[i] = None
+    inmates = [inmate for inmate in inmates if inmate]
+    return inmates
+
+
 def find_missing(inmates, recent_inmates):
     """Find inmates that no longer appear on the page that may not be logged.
 
@@ -460,41 +499,9 @@ def main():
         f.write(html)
     # Parse list of inmates from webpage
     inmates = parse_inmates(html)
-    # Load the list of inmates seen last time we got the page
-    recent_inmates = read_log(recent=True)
-    # Find inmates that no longer appear on the page that may not be logged.
-    missing = find_missing(inmates, recent_inmates)
     # Make a copy of the current parsed inmates to use later
     inmates_original = inmates[:]
-    # Discard recent inmates with no charges listed
-    recent_inmates = [recent for recent in recent_inmates if recent.charges]
-    # Compare the current list with the list read last time (recent) and
-    # get rid of duplicates (already logged inmates). Also discard inmates
-    # that have no charges listed, or if the only charge is
-    # 'LOCAL MUNICIPAL WARRANT'.
-    # TODO(bwbaugh): Make this readable by converting to proper for-loopps.
-    inmates = [inmate for inmate in inmates
-               if inmate.charges and
-               not (len(inmate.charges) == 1 and
-                    re.search(r'WARRANT(?:S)?\Z', inmate.charges[0]['charge']))
-               and not any((recent.id == inmate.id) and
-                           (len(recent.charges) <= len(inmate.charges))
-                           for recent in recent_inmates)]
-    # Add to the current list those missing ones without charges that
-    # also need to be logged.
-    inmates.extend(missing)
-    # Double check that there are no duplicates.
-    # Note: this is needed due to programming logic error, but the code
-    # is getting complicated so in case I don't find the bug better to check.
-    for i in range(len(inmates)):
-        for j in range(i + 1, len(inmates)):
-            if inmates[i] and inmates[j] and inmates[i].id == inmates[j].id:
-                logger.warning(
-                    'Removing duplicate found in inmates (ID: %s)',
-                    inmates[i].id,
-                )
-                inmates[i] = None
-    inmates = [inmate for inmate in inmates if inmate]
+    inmates = extract_inmates_to_process(inmates)
     # We now have our final list of inmates, so let's process them.
     if inmates:
         try:
