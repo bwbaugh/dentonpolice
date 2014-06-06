@@ -72,8 +72,6 @@ def get_jail_report():
     except urllib.error.URLError as e:
         logger.error("%r", e)
         return None
-    with open('dentonpolice_recent.html', mode='w', encoding='utf-8') as f:
-        f.write(html)
     return html
 
 
@@ -457,6 +455,9 @@ def main():
     if html is None:
         # Without a report, there is nothing to do.
         return
+    with open('dentonpolice_recent.html', mode='w', encoding='utf-8') as f:
+        # Useful for debugging to have a copy of the last seen page.
+        f.write(html)
     # Parse list of inmates from webpage
     inmates = parse_inmates(html)
     # Load the list of inmates seen last time we got the page
