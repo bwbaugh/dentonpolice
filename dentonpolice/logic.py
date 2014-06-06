@@ -56,9 +56,24 @@ def get_jail_report():
     logger = logging.getLogger('JailReport')
     logger.debug("Getting Jail Report")
     logger.debug("Opening URL")
-    response = opener.open('http://dpdjailview.cityofdenton.com/')
-    logger.debug("Reading page")
-    html = response.read().decode('utf-8')
+    try:
+        response = opener.open('http://dpdjailview.cityofdenton.com/')
+        logger.debug("Reading page")
+        html = response.read().decode('utf-8')
+    except urllib.error.HTTPError as e:
+        # Service Unavailable
+        if e.code == 503:
+            reason = "HTTP Error 503: Service Unavailable"
+        else:
+            reason = e
+        logger.error("JailReport: %r", reason)
+        return None
+    except http.client.HTTPException as e:
+        logger.error("JailReport: %r", e)
+        return None
+    except urllib.error.URLError as e:
+        logger.error("JailReport: %r", e)
+        return None
     with open('dentonpolice_recent.html', mode='w', encoding='utf-8') as f:
         f.write(html)
     return html
@@ -440,22 +455,9 @@ def main():
     and upload to Twitter.
     """
     logger = logging.getLogger('main')
-    # Get the Jail Report webpage
-    try:
-        html = get_jail_report()
-    except urllib.error.HTTPError as e:
-        # Service Unavailable
-        if e.code == 503:
-            reason = "HTTP Error 503: Service Unavailable"
-        else:
-            reason = e
-        logger.error("JailReport: %r", reason)
-        return
-    except http.client.HTTPException as e:
-        logger.error("JailReport: %r", e)
-        return
-    except urllib.error.URLError as e:
-        logger.error("JailReport: %r", e)
+    html = get_jail_report()
+    if html is None:
+        # Without a report, there is nothing to do.
         return
     # Parse list of inmates from webpage
     inmates = parse_inmates(html)
