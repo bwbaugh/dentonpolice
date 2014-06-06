@@ -60,7 +60,6 @@ def get_jail_report():
         logger.debug("Reading page")
         html = response.read().decode('utf-8')
     except urllib.error.HTTPError as e:
-        # Service Unavailable
         if e.code == 503:
             reason = "HTTP Error 503: Service Unavailable"
         else:
