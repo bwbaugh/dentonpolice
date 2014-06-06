@@ -55,7 +55,6 @@ def get_jail_report():
     """Retrieves the Denton City Jail Custody Report webpage."""
     logger = logging.getLogger('JailReport')
     logger.debug("Getting Jail Report")
-    logger.debug("Opening URL")
     try:
         response = opener.open('http://dpdjailview.cityofdenton.com/')
         logger.debug("Reading page")
