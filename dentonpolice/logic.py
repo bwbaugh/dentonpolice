@@ -36,6 +36,11 @@ APP_SECRET = config_dict['twitter']['API secret']
 OAUTH_TOKEN = config_dict['twitter']['Access token']
 OAUTH_TOKEN_SECRET = config_dict['twitter']['Access token secret']
 
+IS_TWITTER_AVAILABLE = (
+    Twython is not None and
+    APP_KEY and APP_SECRET and OAUTH_TOKEN and OAUTH_TOKEN_SECRET
+)
+
 
 # Proxy setup
 # If Polipo isn't running, you might need to start it manually after Tor,
@@ -522,9 +527,7 @@ def main():
         inmates = [inmate for inmate in inmates if inmate.mug]
         # Log and post to Twitter.
         log_inmates(inmates)
-        if (Twython is not None and
-                APP_KEY and APP_SECRET and
-                OAUTH_TOKEN and OAUTH_TOKEN_SECRET):
+        if IS_TWITTER_AVAILABLE:
             tweet_mug_shots(inmates)
         # Remove any inmates that failed to post so they're retried.
         posted = inmates_original[:]
@@ -537,7 +540,5 @@ def main():
     (most_count, on_date) = get_most_inmates_count()
     count = len(inmates_original)
     if not most_count or count > most_count:
-        if (Twython is not None and
-                APP_KEY and APP_SECRET and
-                OAUTH_TOKEN and OAUTH_TOKEN_SECRET):
+        if IS_TWITTER_AVAILABLE:
             tweet_most_count(count, most_count, on_date)
