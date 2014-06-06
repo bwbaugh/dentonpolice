@@ -36,6 +36,11 @@ APP_SECRET = config_dict['twitter']['API secret']
 OAUTH_TOKEN = config_dict['twitter']['Access token']
 OAUTH_TOKEN_SECRET = config_dict['twitter']['Access token secret']
 
+IS_TWITTER_AVAILABLE = (
+    Twython is not None and
+    APP_KEY and APP_SECRET and OAUTH_TOKEN and OAUTH_TOKEN_SECRET
+)
+
 
 # Proxy setup
 # If Polipo isn't running, you might need to start it manually after Tor,
@@ -55,12 +60,23 @@ def get_jail_report():
     """Retrieves the Denton City Jail Custody Report webpage."""
     logger = logging.getLogger('JailReport')
     logger.debug("Getting Jail Report")
-    logger.debug("Opening URL")
-    response = opener.open('http://dpdjailview.cityofdenton.com/')
-    logger.debug("Reading page")
-    html = response.read().decode('utf-8')
-    with open('dentonpolice_recent.html', mode='w', encoding='utf-8') as f:
-        f.write(html)
+    try:
+        response = opener.open('http://dpdjailview.cityofdenton.com/')
+        logger.debug("Reading page")
+        html = response.read().decode('utf-8')
+    except urllib.error.HTTPError as e:
+        if e.code == 503:
+            reason = "HTTP Error 503: Service Unavailable"
+        else:
+            reason = e
+        logger.error("%r", reason)
+        return None
+    except http.client.HTTPException as e:
+        logger.error("%r", e)
+        return None
+    except urllib.error.URLError as e:
+        logger.error("%r", e)
+        return None
     return html
 
 
@@ -347,6 +363,45 @@ def parse_inmates(html):
     return inmates
 
 
+def extract_inmates_to_process(inmates):
+    """Filter the inmates and return only the ones that should be posted."""
+    logger = logging.getLogger('extract_inmates_to_process')
+    # Load the list of inmates seen last time we got the page
+    recent_inmates = read_log(recent=True)
+    # Find inmates that no longer appear on the page that may not be logged.
+    missing = find_missing(inmates, recent_inmates)
+    # Discard recent inmates with no charges listed
+    recent_inmates = [recent for recent in recent_inmates if recent.charges]
+    # Compare the current list with the list read last time (recent) and
+    # get rid of duplicates (already logged inmates). Also discard inmates
+    # that have no charges listed, or if the only charge is
+    # 'LOCAL MUNICIPAL WARRANT'.
+    # TODO(bwbaugh): Make this readable by converting to proper for-loopps.
+    inmates = [inmate for inmate in inmates
+               if inmate.charges and
+               not (len(inmate.charges) == 1 and
+                    re.search(r'WARRANT(?:S)?\Z', inmate.charges[0]['charge']))
+               and not any((recent.id == inmate.id) and
+                           (len(recent.charges) <= len(inmate.charges))
+                           for recent in recent_inmates)]
+    # Add to the current list those missing ones without charges that
+    # also need to be logged.
+    inmates.extend(missing)
+    # Double check that there are no duplicates.
+    # Note: this is needed due to programming logic error, but the code
+    # is getting complicated so in case I don't find the bug better to check.
+    for i in range(len(inmates)):
+        for j in range(i + 1, len(inmates)):
+            if inmates[i] and inmates[j] and inmates[i].id == inmates[j].id:
+                logger.warning(
+                    'Removing duplicate found in inmates (ID: %s)',
+                    inmates[i].id,
+                )
+                inmates[i] = None
+    inmates = [inmate for inmate in inmates if inmate]
+    return inmates
+
+
 def find_missing(inmates, recent_inmates):
     """Find inmates that no longer appear on the page that may not be logged.
 
@@ -436,64 +491,27 @@ def tweet_most_count(count, most_count, on_date):
 def main():
     """Main function
 
-    Used to scrape the Jail Custody Report, download mug shots, save a log,
-    and upload to Twitter.
+    Performs the following steps:
+
+    1.  Scrape the Jail Custody Report.
+    2.  Process to find new inmates that need to be posted.
+    3.  Download mug shots.
+    4.  Save a log.
+    5.  Upload to Twitter.
     """
     logger = logging.getLogger('main')
-    # Get the Jail Report webpage
-    try:
-        html = get_jail_report()
-    except urllib.error.HTTPError as e:
-        # Service Unavailable
-        if e.code == 503:
-            reason = "HTTP Error 503: Service Unavailable"
-        else:
-            reason = e
-        logger.error("JailReport: %r", reason)
+    html = get_jail_report()
+    if html is None:
+        # Without a report, there is nothing to do.
         return
-    except http.client.HTTPException as e:
-        logger.error("JailReport: %r", e)
-        return
-    except urllib.error.URLError as e:
-        logger.error("JailReport: %r", e)
-        return
+    with open('dentonpolice_recent.html', mode='w', encoding='utf-8') as f:
+        # Useful for debugging to have a copy of the last seen page.
+        f.write(html)
     # Parse list of inmates from webpage
     inmates = parse_inmates(html)
-    # Load the list of inmates seen last time we got the page
-    recent_inmates = read_log(recent=True)
-    # Find inmates that no longer appear on the page that may not be logged.
-    missing = find_missing(inmates, recent_inmates)
     # Make a copy of the current parsed inmates to use later
     inmates_original = inmates[:]
-    # Discard recent inmates with no charges listed
-    recent_inmates = [recent for recent in recent_inmates if recent.charges]
-    # Compare the current list with the list read last time (recent) and
-    # get rid of duplicates (already logged inmates). Also discard inmates
-    # that have no charges listed, or if the only charge is
-    # 'LOCAL MUNICIPAL WARRANT'.
-    # TODO(bwbaugh): Make this readable by converting to proper for-loopps.
-    inmates = [inmate for inmate in inmates
-               if inmate.charges and
-               not (len(inmate.charges) == 1 and
-                    re.search(r'WARRANT(?:S)?\Z', inmate.charges[0]['charge']))
-               and not any((recent.id == inmate.id) and
-                           (len(recent.charges) <= len(inmate.charges))
-                           for recent in recent_inmates)]
-    # Add to the current list those missing ones without charges that
-    # also need to be logged.
-    inmates.extend(missing)
-    # Double check that there are no duplicates.
-    # Note: this is needed due to programming logic error, but the code
-    # is getting complicated so in case I don't find the bug better to check.
-    for i in range(len(inmates)):
-        for j in range(i + 1, len(inmates)):
-            if inmates[i] and inmates[j] and inmates[i].id == inmates[j].id:
-                logger.warning(
-                    'Removing duplicate found in inmates (ID: %s)',
-                    inmates[i].id,
-                )
-                inmates[i] = None
-    inmates = [inmate for inmate in inmates if inmate]
+    inmates = extract_inmates_to_process(inmates)
     # We now have our final list of inmates, so let's process them.
     if inmates:
         try:
@@ -514,9 +532,7 @@ def main():
         inmates = [inmate for inmate in inmates if inmate.mug]
         # Log and post to Twitter.
         log_inmates(inmates)
-        if (Twython is not None and
-                APP_KEY and APP_SECRET and
-                OAUTH_TOKEN and OAUTH_TOKEN_SECRET):
+        if IS_TWITTER_AVAILABLE:
             tweet_mug_shots(inmates)
         # Remove any inmates that failed to post so they're retried.
         posted = inmates_original[:]
@@ -529,7 +545,5 @@ def main():
     (most_count, on_date) = get_most_inmates_count()
     count = len(inmates_original)
     if not most_count or count > most_count:
-        if (Twython is not None and
-                APP_KEY and APP_SECRET and
-                OAUTH_TOKEN and OAUTH_TOKEN_SECRET):
+        if IS_TWITTER_AVAILABLE:
             tweet_most_count(count, most_count, on_date)
