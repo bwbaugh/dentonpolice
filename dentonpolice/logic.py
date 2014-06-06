@@ -64,13 +64,13 @@ def get_jail_report():
             reason = "HTTP Error 503: Service Unavailable"
         else:
             reason = e
-        logger.error("JailReport: %r", reason)
+        logger.error("%r", reason)
         return None
     except http.client.HTTPException as e:
-        logger.error("JailReport: %r", e)
+        logger.error("%r", e)
         return None
     except urllib.error.URLError as e:
-        logger.error("JailReport: %r", e)
+        logger.error("%r", e)
         return None
     with open('dentonpolice_recent.html', mode='w', encoding='utf-8') as f:
         f.write(html)
