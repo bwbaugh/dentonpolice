@@ -491,8 +491,13 @@ def tweet_most_count(count, most_count, on_date):
 def main():
     """Main function
 
-    Used to scrape the Jail Custody Report, download mug shots, save a log,
-    and upload to Twitter.
+    Performs the following steps:
+
+    1.  Scrape the Jail Custody Report.
+    2.  Process to find new inmates that need to be posted.
+    3.  Download mug shots.
+    4.  Save a log.
+    5.  Upload to Twitter.
     """
     logger = logging.getLogger('main')
     html = get_jail_report()
