@@ -8,7 +8,6 @@
 import datetime
 import json
 import locale
-import pprint
 import re
 
 from dentonpolice.zodiac import zodiac_emoji_for_date
@@ -199,11 +198,13 @@ class Inmate(object):
             'seen': self.seen,
         }
 
-    def __str__(self):
-        """String representation of the Inmate formatted with pprint."""
-        return pprint.pformat(dict((k, v) for (k, v) in vars(self).items()
-                                   if k != 'mug'))
-
     def __repr__(self):
         """Represent the Inmate as a dictionary, not including the mug shot."""
-        return str(dict((k, v) for (k, v) in vars(self).items() if k != 'mug'))
+        template = '{class_name}({kwargs})'
+        return template.format(
+            class_name=self.__class__.__name__,
+            kwargs=', '.join(
+                '='.join([key, repr(value)])
+                for key, value in self._asdict().items()
+            ),
+        )
