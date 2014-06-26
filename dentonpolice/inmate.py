@@ -6,6 +6,7 @@
 # http://creativecommons.org/licenses/by-nc-sa/3.0/
 """Code related to the representation of inmates."""
 import datetime
+import json
 import locale
 import pprint
 import re
@@ -158,6 +159,45 @@ class Inmate(object):
                     message, len(message), petition, len(petition),
                 )
             return message_with_petition
+
+    def to_json(self, **kwargs):
+        """Return a JSON string that represents this inmate.
+
+        NOTE: Not all attributes are included.
+
+        Args:
+            kwargs: Keyword arguments will be passed to `json.dumps`.
+
+        Returns:
+            String in JSON format. For example:
+
+            {
+              "arrest": "09/07/2012 15:30:57",
+              "DOB": "11/26/1988",
+              "charges": [
+                {
+                  "type": "BOND",
+                  "charge": "DPD / FAIL TO MAINTIAN FINANCIAL RESPONSIBILITY",
+                  "amount": "$569.00"
+                }
+              ],
+              "id": "318937",
+              "seen": "2012-09-07 23:04:03.017000",
+              "name": "DOE, JANE"
+            }
+        """
+        return json.dumps(self._asdict(), **kwargs)
+
+    def _asdict(self):
+        """Helper to generate a dictionary representation."""
+        return {
+            'arrest': self.arrest,
+            'charges': self.charges,
+            'DOB': self.DOB,
+            'id': self.id,
+            'name': self.name,
+            'seen': self.seen,
+        }
 
     def __str__(self):
         """String representation of the Inmate formatted with pprint."""
