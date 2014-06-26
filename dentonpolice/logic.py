@@ -221,7 +221,7 @@ def read_log(recent=False):
     try:
         with open(location, encoding='utf-8') as f:
             for line in f:
-                inmates.append(Inmate(ast.literal_eval(line)))
+                inmates.append(Inmate(**ast.literal_eval(line)))
     except IOError as e:
         # No such file
         if e.errno == errno.ENOENT:
@@ -359,7 +359,7 @@ def parse_inmates(html):
         # Store the current time as when seen
         data['seen'] = str(datetime.datetime.now())
         # Store complete Inmate object
-        inmates.append(Inmate(data))
+        inmates.append(Inmate(**data))
     return inmates
 
 
