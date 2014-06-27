@@ -171,6 +171,19 @@ class Inmate(object):
                 )
             return message_with_petition
 
+    @classmethod
+    def from_json(cls, json_string):
+        """Return an instance loaded from a JSON encoded string."""
+        data = json.loads(json_string)
+        return cls(
+            data['id'],
+            data['name'],
+            data['DOB'],
+            data['arrest'],
+            data['seen'],
+            data['charges'],
+        )
+
     def to_json(self, **kwargs):
         """Return a JSON string that represents this inmate.
 
@@ -205,6 +218,7 @@ class Inmate(object):
             'arrest': self.arrest,
             'charges': self.charges,
             'DOB': self.DOB,
+            'git_hash': self.git_hash,
             'id': self.id,
             'name': self.name,
             'seen': self.seen,

@@ -9,7 +9,6 @@ import datetime
 import errno
 import fnmatch
 import http.client
-import json
 import logging
 import os
 import re
@@ -224,7 +223,7 @@ def read_log(recent=False):
     try:
         with open(location, encoding='utf-8') as f:
             for line in f:
-                inmates.append(Inmate(**json.loads(line)))
+                inmates.append(Inmate.from_json(line))
     except IOError as e:
         # No such file
         if e.errno == errno.ENOENT:
