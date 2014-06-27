@@ -231,6 +231,6 @@ class Inmate(object):
             class_name=self.__class__.__name__,
             kwargs=', '.join(
                 '='.join([key, repr(value)])
-                for key, value in self._asdict().items()
+                for key, value in sorted(self._asdict().items())
             ),
         )
