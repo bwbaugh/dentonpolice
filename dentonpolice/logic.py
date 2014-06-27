@@ -5,11 +5,11 @@
 # To view a copy of this license, visit:
 # http://creativecommons.org/licenses/by-nc-sa/3.0/
 """Responsible for retrieving, parsing, logging, and posting inmates."""
-import ast
 import datetime
 import errno
 import fnmatch
 import http.client
+import json
 import logging
 import os
 import re
@@ -40,6 +40,9 @@ IS_TWITTER_AVAILABLE = (
     Twython is not None and
     APP_KEY and APP_SECRET and OAUTH_TOKEN and OAUTH_TOKEN_SECRET
 )
+
+LOG_FILENAME = 'dentonpolice_log.json'
+RECENT_LOG_FILENAME = 'dentonpolice_recent.json'
 
 
 # Proxy setup
@@ -180,10 +183,10 @@ def log_inmates(inmates, recent=False, mode='a'):
     """
     logger = logging.getLogger('log_inmates')
     if recent:
-        location = 'dentonpolice_recent.txt'
+        location = RECENT_LOG_FILENAME
         mode = 'w'
     else:
-        location = 'dentonpolice_log.txt'
+        location = LOG_FILENAME
     logger.debug(
         'Saving inmates to {log_name} log'.format(
             log_name='recent' if recent else 'standard',
@@ -193,7 +196,7 @@ def log_inmates(inmates, recent=False, mode='a'):
         for inmate in inmates:
             if not recent:
                 logger.info("Recording Inmate:\n%s", inmate)
-            f.write(repr(inmate) + '\n')
+            f.write(inmate.to_json() + '\n')
 
 
 def read_log(recent=False):
@@ -209,9 +212,9 @@ def read_log(recent=False):
     """
     logger = logging.getLogger('read_log')
     if recent:
-        location = 'dentonpolice_recent.txt'
+        location = RECENT_LOG_FILENAME
     else:
-        location = 'dentonpolice_log.txt'
+        location = LOG_FILENAME
     logger.debug(
         'Reading inmates from {log_name} log'.format(
             log_name='recent' if recent else 'standard',
@@ -221,7 +224,7 @@ def read_log(recent=False):
     try:
         with open(location, encoding='utf-8') as f:
             for line in f:
-                inmates.append(Inmate(ast.literal_eval(line)))
+                inmates.append(Inmate(**json.loads(line)))
     except IOError as e:
         # No such file
         if e.errno == errno.ENOENT:
@@ -359,7 +362,7 @@ def parse_inmates(html):
         # Store the current time as when seen
         data['seen'] = str(datetime.datetime.now())
         # Store complete Inmate object
-        inmates.append(Inmate(data))
+        inmates.append(Inmate(**data))
     return inmates
 
 

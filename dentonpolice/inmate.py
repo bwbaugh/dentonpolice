@@ -6,8 +6,8 @@
 # http://creativecommons.org/licenses/by-nc-sa/3.0/
 """Code related to the representation of inmates."""
 import datetime
+import json
 import locale
-import pprint
 import re
 
 from dentonpolice.zodiac import zodiac_emoji_for_date
@@ -20,18 +20,54 @@ TWEET_LIMIT = 140 - URL_LENGTH  # The mug shot is included as a link.
 class Inmate(object):
     """Storage class to hold name, DOB, charge, etc.
 
-    The class __init__ will accept all keyword arguments and set them as
-    class attributes. In the future it would be a good idea to switch from
-    this method to actually specifying each class attribute explicitly.
+    Attributes:
+        arrest: String of the date the inmate was arrested in the
+            format: 'YYYY/MM/DD HH:MM:SS' where 'HH' is 24-hour.
+        charges: List of dictionaries for each charge
+            with the following attributes:
+                amount: String of the USD dollar amount associated
+                    with the bond or fine. For example: '$369.00'.
+                charge: String of the charge description.
+                type: String of the type of charge, usually either
+                    'FINE', 'BOND', or 'NO BOND'.
+        DOB: String of the date of birth in the format:
+            'YYYY/MM/DD'.
+        id: String of the integer ID from the source of the record.
+        mug: String of the raw bytes of the mugshot image.
+            (default None)
+        name: String of the inmate's given name and surname in the
+            format: 'Last, First'.
+        posted: Boolean to indicate if this instance was successfully
+            posted to Twitter. (default None)
+        seen: String for when the record was scraped in the same
+            format as `str(datetime_instance)`. For example:
+            '2012-09-07 23:04:03.017000'.
     """
-    def __init__(self, *args, **kwargs):
-        """Inits Inmate with all keyword arguments as class attributes."""
-        setattr(self, 'mug', None)
-        for dictionary in args:
-            for key in dictionary:
-                setattr(self, key, dictionary[key])
-        for key in kwargs:
-            setattr(self, key, kwargs[key])
+    def __init__(self, id, name, DOB, arrest, seen, charges):
+        """Create a new inmate object.
+
+        Args:
+            id: String of the integer ID from the source of the record.
+            name: String of the inmate's given name and surname in the
+                format: 'Last, First'.
+            DOB: String of the date of birth in the format:
+                'YYYY/MM/DD'.
+            arrest: String of the date the inmate was arrested in the
+                format: 'YYYY/MM/DD HH:MM:SS' where 'HH' is 24-hour.
+            seen: String for when the record was scraped in the same
+                format as `str(datetime_instance)`. For example:
+                '2012-09-07 23:04:03.017000'.
+            charges: List of dictionaries for each charge. See the
+                class-docstring for a description of the keys.
+        """
+        self.arrest = arrest
+        self.charges = charges
+        self.DOB = DOB
+        self.id = id
+        self.mug = None
+        self.name = name
+        self.posted = None
+        self.seen = seen
 
     def get_twitter_message(self):
         """Constructs a mug shot caption """
@@ -123,11 +159,52 @@ class Inmate(object):
                 )
             return message_with_petition
 
-    def __str__(self):
-        """String representation of the Inmate formatted with pprint."""
-        return pprint.pformat(dict((k, v) for (k, v) in vars(self).items()
-                                   if k != 'mug'))
+    def to_json(self, **kwargs):
+        """Return a JSON string that represents this inmate.
+
+        NOTE: Not all attributes are included.
+
+        Args:
+            kwargs: Keyword arguments will be passed to `json.dumps`.
+
+        Returns:
+            String in JSON format. For example:
+
+            {
+              "arrest": "09/07/2012 15:30:57",
+              "DOB": "11/26/1988",
+              "charges": [
+                {
+                  "type": "BOND",
+                  "charge": "DPD / FAIL TO MAINTIAN FINANCIAL RESPONSIBILITY",
+                  "amount": "$569.00"
+                }
+              ],
+              "id": "318937",
+              "seen": "2012-09-07 23:04:03.017000",
+              "name": "DOE, JANE"
+            }
+        """
+        return json.dumps(self._asdict(), **kwargs)
+
+    def _asdict(self):
+        """Helper to generate a dictionary representation."""
+        return {
+            'arrest': self.arrest,
+            'charges': self.charges,
+            'DOB': self.DOB,
+            'id': self.id,
+            'name': self.name,
+            'seen': self.seen,
+        }
 
     def __repr__(self):
         """Represent the Inmate as a dictionary, not including the mug shot."""
-        return str(dict((k, v) for (k, v) in vars(self).items() if k != 'mug'))
+        template = '{class_name}({kwargs})'
+        return template.format(
+            class_name=self.__class__.__name__,
+            kwargs=', '.join(
+                '='.join([key, repr(value)])
+                for key, value in self._asdict().items()
+            ),
+        )
