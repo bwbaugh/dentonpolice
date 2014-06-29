@@ -9,6 +9,7 @@ import datetime
 import json
 import locale
 import re
+import hashlib
 
 from dentonpolice.util import git_hash
 from dentonpolice.zodiac import zodiac_emoji_for_date
@@ -47,6 +48,8 @@ class Inmate(object):
     Properties:
         git_hash: String of the SHA1 git-hash of the `mug` attribute,
             otherwise None if the `mug` attribute is None.
+        sha1: String of the standard SHA1 hash of the `mug` attribute,
+            otherwise None if the `mug` attribute is None.
     """
     def __init__(self, id, name, DOB, arrest, seen, charges):
         """Create a new inmate object.
@@ -77,9 +80,19 @@ class Inmate(object):
     @property
     def git_hash(self):
         """The SHA1 git-hash of the `mug` attribute."""
+        # TODO(bwbaugh|2014-06-28): Decide and keep only one hash.
         if self.mug is None:
             return None
         return git_hash(self.mug)
+
+    @property
+    def sha1(self):
+        """The standard SHA1 hash of the `mug` attribute."""
+        # TODO(bwbaugh|2014-06-28): Decide and keep only one hash.
+        if self.mug is None:
+            return None
+        hash_object = hashlib.sha1(self.mug)
+        return hash_object.hexdigest()
 
     def get_twitter_message(self):
         """Constructs a mug shot caption """
