@@ -9,7 +9,9 @@ import datetime
 import json
 import locale
 import re
+import hashlib
 
+from dentonpolice.util import git_hash
 from dentonpolice.zodiac import zodiac_emoji_for_date
 
 
@@ -42,6 +44,12 @@ class Inmate(object):
         seen: String for when the record was scraped in the same
             format as `str(datetime_instance)`. For example:
             '2012-09-07 23:04:03.017000'.
+
+    Properties:
+        git_hash: String of the SHA1 git-hash of the `mug` attribute,
+            otherwise None if the `mug` attribute is None.
+        sha1: String of the standard SHA1 hash of the `mug` attribute,
+            otherwise None if the `mug` attribute is None.
     """
     def __init__(self, id, name, DOB, arrest, seen, charges):
         """Create a new inmate object.
@@ -68,6 +76,23 @@ class Inmate(object):
         self.name = name
         self.posted = None
         self.seen = seen
+
+    @property
+    def git_hash(self):
+        """The SHA1 git-hash of the `mug` attribute."""
+        # TODO(bwbaugh|2014-06-28): Decide and keep only one hash.
+        if self.mug is None:
+            return None
+        return git_hash(self.mug)
+
+    @property
+    def sha1(self):
+        """The standard SHA1 hash of the `mug` attribute."""
+        # TODO(bwbaugh|2014-06-28): Decide and keep only one hash.
+        if self.mug is None:
+            return None
+        hash_object = hashlib.sha1(self.mug)
+        return hash_object.hexdigest()
 
     def get_twitter_message(self):
         """Constructs a mug shot caption """
@@ -159,6 +184,19 @@ class Inmate(object):
                 )
             return message_with_petition
 
+    @classmethod
+    def from_json(cls, json_string):
+        """Return an instance loaded from a JSON encoded string."""
+        data = json.loads(json_string)
+        return cls(
+            data['id'],
+            data['name'],
+            data['DOB'],
+            data['arrest'],
+            data['seen'],
+            data['charges'],
+        )
+
     def to_json(self, **kwargs):
         """Return a JSON string that represents this inmate.
 
@@ -193,9 +231,11 @@ class Inmate(object):
             'arrest': self.arrest,
             'charges': self.charges,
             'DOB': self.DOB,
+            'git_hash': self.git_hash,
             'id': self.id,
             'name': self.name,
             'seen': self.seen,
+            'sha1': self.sha1,
         }
 
     def __repr__(self):
@@ -205,6 +245,6 @@ class Inmate(object):
             class_name=self.__class__.__name__,
             kwargs=', '.join(
                 '='.join([key, repr(value)])
-                for key, value in self._asdict().items()
+                for key, value in sorted(self._asdict().items())
             ),
         )
