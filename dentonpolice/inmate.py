@@ -235,6 +235,7 @@ class Inmate(object):
             'id': self.id,
             'name': self.name,
             'seen': self.seen,
+            'sha1': self.sha1,
         }
 
     def __repr__(self):
