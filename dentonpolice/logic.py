@@ -271,7 +271,7 @@ def tweet_mug_shots(inmates):
         logger.debug('Media fname: {fname}'.format(fname=mug_shot_fname))
         try:
             with open(mug_shot_fname, mode='rb') as mug_shot_file:
-                twitter.update_status_with_media(
+                inmate.tweet = twitter.update_status_with_media(
                     status=caption,
                     media=mug_shot_file,
                 )
@@ -533,9 +533,13 @@ def main():
         # Discard inmates that we couldn't save a mug shot for.
         inmates = [inmate for inmate in inmates if inmate.mug]
         # Log and post to Twitter.
-        log_inmates(inmates)
-        if IS_TWITTER_AVAILABLE:
-            tweet_mug_shots(inmates)
+        try:
+            if IS_TWITTER_AVAILABLE:
+                tweet_mug_shots(inmates)
+        finally:
+            # Still want to log even if there was an uncaught error
+            # while posting to Twitter.
+            log_inmates(inmates)
         # Remove any inmates that failed to post so they're retried.
         posted = inmates_original[:]
         for inmate in inmates:

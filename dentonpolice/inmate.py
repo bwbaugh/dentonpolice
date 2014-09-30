@@ -44,6 +44,9 @@ class Inmate(object):
         seen: String for when the record was scraped in the same
             format as `str(datetime_instance)`. For example:
             '2012-09-07 23:04:03.017000'.
+        tweet: JSON serializable object representing the tweet posted,
+            otherwise None if no tweet has been created since creating
+            the instance.
 
     Properties:
         git_hash: String of the SHA1 git-hash of the `mug` attribute,
@@ -76,6 +79,7 @@ class Inmate(object):
         self.name = name
         self.posted = None
         self.seen = seen
+        self.tweet = None
 
     @property
     def git_hash(self):
@@ -236,6 +240,7 @@ class Inmate(object):
             'name': self.name,
             'seen': self.seen,
             'sha1': self.sha1,
+            'tweet': self.tweet
         }
 
     def __repr__(self):
