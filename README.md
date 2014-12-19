@@ -15,7 +15,7 @@ Usage
 
 1. Create a venv using Python 3 e.g.,
 
-        virtualenv --no-site-packages --python `which python3` venv
+        virtualenv --no-site-packages --python $(which python3) venv
 
 2. Install requirements e.g., `pip install -r requirements.txt`.
 
