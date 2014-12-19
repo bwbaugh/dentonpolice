@@ -6,8 +6,9 @@
 mugs/
 
 # Log files
-dentonpolice_*.txt
 dentonpolice_*.html
+dentonpolice_*.json
+dentonpolice_*.txt
 
 # Configuration file
 config.yaml
