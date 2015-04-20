@@ -20,3 +20,5 @@ config.yaml
 
 *.py[co]
 venv/
+.tox
+.coverage
