@@ -5,3 +5,16 @@ script:
 - tox
 env:
 - TOXENV=py34
+deploy:
+  provider: codedeploy
+  region: us-west-2
+  access_key_id: AKIAJ22F2WU3GH7HYC7A
+  secret_access_key:
+    secure: M8IPnPBr2sdFffgZbjo7iGCVcbHUGTJ6t/oZWYuqYx38mj4rBr+aBu8a//6aoYP/3Wo1z75jTbf/YH0x1UQWUTkh/CmXmeHZTETPDCR0zlTZSH18ncjMOMHuE0gl8HmCyk4l3UERjH2jWkbGJQu8AB3X3AIX5RXd/nQBlB/aTeM=
+  revision_type: github
+  application: dentonpolice
+  deployment_group: solid
+  on:
+    repo: bwbaugh/dentonpolice
+    branch: master
+    condition: "$TOXENV = py34"
