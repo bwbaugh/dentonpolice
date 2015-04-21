@@ -13,3 +13,9 @@ twitter:
   API secret: api_secret_from_application_settings
   Access token: access_token_from_your_access_token
   Access token secret: access_token_secret_from_your_access_token
+
+# If the `aws` key exists, then the jail report will be saved to S3.
+# aws:
+#   s3:
+#     region: some_region
+#     bucket: some_bucket
