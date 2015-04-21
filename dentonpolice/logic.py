@@ -107,16 +107,31 @@ def save_jail_report_to_s3(html, timestamp):
     )
     key = boto.s3.key.Key(
         bucket=conn.get_bucket(bucket_name=config_dict['aws']['s3']['bucket']),
-        name='jail_report/{provenance}/{time}.html'.format(
-            provenance='dentonpolice',
-            # Example: '20150421080433'
-            time=timestamp.strftime('%Y%m%d%H%M%S'),
-        ),
+        name=_make_jail_report_key_name(timestamp=timestamp),
     )
     log.debug('Saving report to key: %r', key)
     key.set_contents_from_string(html)
     log.info('Saved jail report to S3: %r', key)
     return key.name
+
+
+def _make_jail_report_key_name(timestamp):
+    # Example: 'jail_report/dentonpolice/2015/04/21/20150421080433.html'
+    return (
+        'jail_report/'
+        '{provenance}/'
+        '{year}/'
+        '{month}/'
+        '{day}/'
+        '{full_time}.html'
+    ).format(
+        provenance='dentonpolice',
+        year=timestamp.strftime('%Y'),
+        month=timestamp.strftime('%m'),
+        day=timestamp.strftime('%d'),
+        # Example: '20150421080433'
+        full_time=timestamp.strftime('%Y%m%d%H%M%S'),
+    )
 
 
 def get_mug_shots(inmates):
