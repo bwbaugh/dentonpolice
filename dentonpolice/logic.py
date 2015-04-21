@@ -17,6 +17,9 @@ import urllib
 import urllib.error
 import urllib.request
 
+import boto.s3
+import boto.s3.key
+
 try:
     from twython import Twython
 except ImportError:
@@ -57,6 +60,9 @@ proxy_support = urllib.request.ProxyHandler({
 })
 opener = urllib.request.build_opener(proxy_support)
 
+# TODO(bwbaugh|2015-04-21): Transition all logging to use this logger.
+log = logging.getLogger(__name__)
+
 
 def get_jail_report():
     """Retrieves the Denton City Jail Custody Report webpage."""
@@ -80,6 +86,37 @@ def get_jail_report():
         logger.error("%r", e)
         return None
     return html
+
+
+def save_jail_report_to_s3(html, timestamp):
+    """Uploads the jail report HTML to S3 with a timestamp.
+
+    The timestamp is used to set the filename / key.
+
+    :param html: The contents of the retrieved report.
+    :type html: str
+    :param timestamp: When the report was retrieved, preferably in UTC.
+    :type timestamp: datetime.datetime
+    """
+    if 'aws' not in config_dict:
+        # TODO(bwbaugh|2015-04-21): Better config error handling.
+        log.info('Not saving jail report to S3 due to no AWS configuration.')
+        return
+    conn = boto.s3.connect_to_region(
+        region_name=config_dict['aws']['s3']['region'],
+    )
+    key = boto.s3.key.Key(
+        bucket=conn.get_bucket(bucket_name=config_dict['aws']['s3']['bucket']),
+        name='jail_report/{provenance}/{time}.html'.format(
+            provenance='dentonpolice',
+            # Example: '20150421080433'
+            time=timestamp.strftime('%Y%m%d%H%M%S'),
+        ),
+    )
+    log.debug('Saving report to key: %r', key)
+    key.set_contents_from_string(html)
+    log.info('Saved jail report to S3: %r', key)
+    return key.name
 
 
 def get_mug_shots(inmates):
@@ -509,6 +546,8 @@ def main():
     with open('dentonpolice_recent.html', mode='w', encoding='utf-8') as f:
         # Useful for debugging to have a copy of the last seen page.
         f.write(html)
+    # Archive the report so it can be processed or analyzed later.
+    save_jail_report_to_s3(html=html, timestamp=datetime.datetime.utcnow())
     # Parse list of inmates from webpage
     inmates = parse_inmates(html)
     # Make a copy of the current parsed inmates to use later
