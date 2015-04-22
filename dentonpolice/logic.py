@@ -139,21 +139,23 @@ def get_mug_shots(inmates):
     logger = logging.getLogger('get_mug_shots')
     logger.debug("Getting mug shots")
     for inmate in inmates:
+        logger.debug("Opening mug shot URL (ID: {})".format(inmate.id))
+        uri = (
+            'http://dpdjailview.cityofdenton.com/'
+            'ImageHandler.ashx?type=image&imageID={mug_id}'
+        ).format(mug_id=inmate.id)
         try:
-            logger.debug("Opening mug shot URL (ID: {})".format(inmate.id))
-            uri = (
-                'http://dpdjailview.cityofdenton.com/'
-                'ImageHandler.ashx?type=image&imageID={mug_id}'
-            ).format(mug_id=inmate.id)
             response = opener.open(uri)
-            inmate.mug = response.read()
+            image_data = response.read()
         except urllib.error.HTTPError as e:
-            if e.code == 500:
-                logger.warning(
-                    'Unable to retrieve: Internal Server Error (ID: %s)',
-                    inmate.id,
-                )
-                inmate.mug = None
+            logger.warning(
+                'Unable to retrieve inmate-ID %s due to HTTP %s: %r',
+                inmate.id,
+                e.code,
+                e,
+            )
+            continue
+        inmate.mug = image_data
 
 
 def save_mug_shots(inmates):
