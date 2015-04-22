@@ -19,11 +19,15 @@ To run only once, execute this module's main() function.
 import logging
 import time
 
+import boto.s3
+
+from dentonpolice import config_dict
 from dentonpolice.logic import main
 
 
 # How often to check the City Jail Custody Report webpage
 SECONDS_BETWEEN_CHECKS = 60 * 5
+
 
 # Logging level
 logging.basicConfig(
@@ -31,12 +35,19 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
 )
 
+if 'aws' in config_dict:
+    conn = boto.s3.connect_to_region(
+        region_name=config_dict['aws']['s3']['region'],
+    )
+    bucket = conn.get_bucket(bucket_name=config_dict['aws']['s3']['bucket'])
+else:
+    bucket = None
 
 # Continuously checks the custody report page every SECONDS_BETWEEN_CHECKS.
 logging.info("Starting main loop.")
 while True:
     try:
-        main()
+        main(bucket=bucket)
         logging.debug("Main loop: going to sleep for %s seconds",
                       SECONDS_BETWEEN_CHECKS)
         time.sleep(SECONDS_BETWEEN_CHECKS)

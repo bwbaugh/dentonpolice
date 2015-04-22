@@ -17,7 +17,6 @@ import urllib
 import urllib.error
 import urllib.request
 
-import boto.s3
 import boto.s3.key
 
 try:
@@ -88,7 +87,7 @@ def get_jail_report():
     return html
 
 
-def save_jail_report_to_s3(html, timestamp):
+def save_jail_report_to_s3(bucket, html, timestamp):
     """Uploads the jail report HTML to S3 with a timestamp.
 
     The timestamp is used to set the filename / key.
@@ -98,15 +97,8 @@ def save_jail_report_to_s3(html, timestamp):
     :param timestamp: When the report was retrieved, preferably in UTC.
     :type timestamp: datetime.datetime
     """
-    if 'aws' not in config_dict:
-        # TODO(bwbaugh|2015-04-21): Better config error handling.
-        log.info('Not saving jail report to S3 due to no AWS configuration.')
-        return
-    conn = boto.s3.connect_to_region(
-        region_name=config_dict['aws']['s3']['region'],
-    )
     key = boto.s3.key.Key(
-        bucket=conn.get_bucket(bucket_name=config_dict['aws']['s3']['bucket']),
+        bucket=bucket,
         name=_make_jail_report_key_name(timestamp=timestamp),
     )
     log.debug('Saving report to key: %r', key)
@@ -544,7 +536,7 @@ def tweet_most_count(count, most_count, on_date):
     log_most_inmates_count(count)
 
 
-def main():
+def main(bucket):
     """Main function
 
     Performs the following steps:
@@ -563,8 +555,13 @@ def main():
     with open('dentonpolice_recent.html', mode='w', encoding='utf-8') as f:
         # Useful for debugging to have a copy of the last seen page.
         f.write(html)
-    # Archive the report so it can be processed or analyzed later.
-    save_jail_report_to_s3(html=html, timestamp=datetime.datetime.utcnow())
+    if bucket is not None:
+        # Archive the report so it can be processed or analyzed later.
+        save_jail_report_to_s3(
+            bucket=bucket,
+            html=html,
+            timestamp=datetime.datetime.utcnow(),
+        )
     # Parse list of inmates from webpage
     inmates = parse_inmates(html)
     # Make a copy of the current parsed inmates to use later
