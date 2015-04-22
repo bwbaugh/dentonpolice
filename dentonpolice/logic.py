@@ -102,7 +102,7 @@ def save_jail_report_to_s3(bucket, html, timestamp):
         name=_make_jail_report_key_name(timestamp=timestamp),
     )
     log.debug('Saving report to key: %r', key)
-    key.set_contents_from_string(html)
+    key.set_contents_from_string(string_data=html)
     log.info('Saved jail report to S3: %r', key)
     return key.name
 
@@ -126,7 +126,7 @@ def _make_jail_report_key_name(timestamp):
     )
 
 
-def get_mug_shots(inmates):
+def get_mug_shots(inmates, bucket):
     """Retrieves the mug shot for each Inmate and stores it in the Inmate."""
     logger = logging.getLogger('get_mug_shots')
     logger.debug("Getting mug shots")
@@ -148,6 +148,32 @@ def get_mug_shots(inmates):
             )
             continue
         inmate.mug = image_data
+        if bucket is not None:
+            _save_mug_shot_to_s3(bucket=bucket, inmate=inmate)
+
+
+def _save_mug_shot_to_s3(bucket, inmate):
+    if inmate.mug is None:
+        raise ValueError('Must have image data in order to save.')
+    # Compute the hash only once and save the result.
+    image_hash = inmate.sha1
+    key = boto.s3.key.Key(
+        bucket=bucket,
+        name='mugshots/{first}/{second}/{hash}.jpg'.format(
+            first=image_hash[0:2],
+            second=image_hash[2:4],
+            hash=image_hash,
+        ),
+    )
+    log.debug('Saving mugshot for inmate-ID %s to S3: %r', inmate.id, key)
+    key.set_contents_from_string(
+        string_data=inmate.mug,
+        headers={'Cache-Control': 'max-age=31556952, public'},
+        # If we've seen this before, keep the original timestamp.
+        replace=False,
+        policy='public-read',
+    )
+    log.debug('Saved mugshot for inmate-ID %s to S3: %r', inmate.id, key)
 
 
 def save_mug_shots(inmates):
@@ -570,7 +596,7 @@ def main(bucket):
     # We now have our final list of inmates, so let's process them.
     if inmates:
         try:
-            get_mug_shots(inmates)
+            get_mug_shots(inmates=inmates, bucket=bucket)
         except urllib.error.HTTPError as e:
             # Service Unavailable
             if e.code == 503:
