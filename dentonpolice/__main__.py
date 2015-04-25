@@ -61,7 +61,7 @@ sentry_handler = raven.handlers.logging.SentryHandler(sentry_client)
 raven.conf.setup_logging(sentry_handler)
 
 # Continuously checks the custody report page every SECONDS_BETWEEN_CHECKS.
-logging.info("Starting main loop.")
+log.info('Starting main loop.')
 while True:
     try:
         main(bucket=bucket)
