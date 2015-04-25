@@ -1,0 +1,27 @@
+-   repo: git@github.com:pre-commit/pre-commit-hooks
+    sha: cedcea550c495d536247ca23115035b17074cac7
+    hooks:
+    -   id: autopep8-wrapper
+        args:
+        - --in-place
+        - --aggressive
+        - --aggressive
+    -   id: check-docstring-first
+    -   id: check-json
+    -   id: check-yaml
+    -   id: debug-statements
+    -   id: double-quote-string-fixer
+    -   id: end-of-file-fixer
+    -   id: requirements-txt-fixer
+    -   id: flake8
+    -   id: name-tests-test
+        files: ^test*/.+\.py$
+    -   id: trailing-whitespace
+-   repo: git@github.com:asottile/reorder_python_imports
+    sha: 3d86483455ab5bd06cc1069fdd5ac57be5463f10
+    hooks:
+    -   id: reorder-python-imports
+-   repo: git@github.com:pre-commit/pre-commit
+    sha: cdf726bbedb15f33ca60fdc397fec379946755fc
+    hooks:
+    -   id: validate_config
