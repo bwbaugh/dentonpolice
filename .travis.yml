@@ -3,6 +3,7 @@ install:
 - pip install tox
 script:
 - tox
+- tox -e pre-commit -- run --all-files
 env:
 - TOXENV=py34
 deploy:

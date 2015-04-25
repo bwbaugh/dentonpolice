@@ -6,10 +6,10 @@
 # http://creativecommons.org/licenses/by-nc-sa/3.0/
 """Code related to the representation of inmates."""
 import datetime
+import hashlib
 import json
 import locale
 import re
-import hashlib
 
 from dentonpolice.util import git_hash
 from dentonpolice.zodiac import zodiac_emoji_for_date
@@ -20,6 +20,7 @@ TWEET_LIMIT = 140 - URL_LENGTH  # The mug shot is included as a link.
 
 
 class Inmate(object):
+
     """Storage class to hold name, DOB, charge, etc.
 
     Attributes:
@@ -54,6 +55,7 @@ class Inmate(object):
         sha1: String of the standard SHA1 hash of the `mug` attribute,
             otherwise None if the `mug` attribute is None.
     """
+
     def __init__(self, id, name, DOB, arrest, seen, charges):
         """Create a new inmate object.
 
@@ -130,7 +132,7 @@ class Inmate(object):
             if bond:
                 locale.setlocale(locale.LC_ALL, '')
                 bond = locale.currency(bond, grouping=True)[:-3]
-                parts.append("Bond: " + bond)
+                parts.append('Bond: ' + bond)
         # Append list of charges
         # But first shorten the charge text
         city_list = [

@@ -8,7 +8,6 @@
 import datetime
 import errno
 import fnmatch
-import http.client
 import logging
 import os
 import re
@@ -18,6 +17,7 @@ import urllib.error
 import urllib.request
 
 import boto.s3.key
+import http.client
 
 try:
     from twython import Twython
@@ -181,7 +181,7 @@ def save_mug_shots(inmates):
     Args:
         inmates: List of Inmate objects to be processed.
     """
-    path = "mugs/"
+    path = 'mugs/'
     # Make mugs/ folder
     try:
         os.makedirs(path)
@@ -218,7 +218,7 @@ def save_mug_shots(inmates):
                 location = '{path}{inmate_id}_{timestamp}.jpg'.format(
                     path=path,
                     inmate_id=inmate.id,
-                    timestamp=datetime.datetime.now().strftime("%y%m%d%H%M%S"),
+                    timestamp=datetime.datetime.now().strftime('%y%m%d%H%M%S'),
                 )
         except OSError as e:
             # No such file

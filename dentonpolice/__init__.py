@@ -32,7 +32,7 @@ config_dict = {
 try:
     with open('config.yaml') as config_file:
         config_dict.update(yaml.load(config_file))
-except FileNotFoundError:
+except FileNotFoundError:  # noqa (flake8 doesn't recognize this Python 3 only)
     pass
 else:
     del config_file
