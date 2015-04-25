@@ -31,14 +31,15 @@ from dentonpolice.logic import main
 # How often to check the City Jail Custody Report webpage
 SECONDS_BETWEEN_CHECKS = 60 * 5
 
-
-# Logging level
 logging.basicConfig(
     level=logging.DEBUG,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
 )
+# Silence unneeded debug statements from boto.
+logging.getLogger('boto').setLevel(logging.INFO)
 
 log = logging.getLogger(__name__)
+
 
 if 'aws' in config_dict:
     conn = boto.s3.connect_to_region(
