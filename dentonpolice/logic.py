@@ -59,30 +59,25 @@ proxy_support = urllib.request.ProxyHandler({
 })
 opener = urllib.request.build_opener(proxy_support)
 
-# TODO(bwbaugh|2015-04-21): Transition all logging to use this logger.
 log = logging.getLogger(__name__)
 
 
 def get_jail_report():
     """Retrieves the Denton City Jail Custody Report webpage."""
-    logger = logging.getLogger('JailReport')
-    logger.debug("Getting Jail Report")
+    log.info('Getting Jail Report')
     try:
         response = opener.open('http://dpdjailview.cityofdenton.com/')
-        logger.debug("Reading page")
+        log.debug('Reading jail report page')
         html = response.read().decode('utf-8')
-    except urllib.error.HTTPError as e:
-        if e.code == 503:
-            reason = "HTTP Error 503: Service Unavailable"
-        else:
-            reason = e
-        logger.error("%r", reason)
+    except urllib.error.HTTPError as error:
+        log.error(
+            'HTTP %r error while getting jail report: %r',
+            error.code,
+            error,
+        )
         return None
-    except http.client.HTTPException as e:
-        logger.error("%r", e)
-        return None
-    except urllib.error.URLError as e:
-        logger.error("%r", e)
+    except (http.client.HTTPException, urllib.error.URLError) as error:
+        log.error('Other error while getting jail report: %r', error)
         return None
     return html
 
@@ -128,10 +123,9 @@ def _make_jail_report_key_name(timestamp):
 
 def get_mug_shots(inmates, bucket):
     """Retrieves the mug shot for each Inmate and stores it in the Inmate."""
-    logger = logging.getLogger('get_mug_shots')
-    logger.debug("Getting mug shots")
+    log.info('Getting mug shots')
     for inmate in inmates:
-        logger.debug("Opening mug shot URL (ID: {})".format(inmate.id))
+        log.info('Opening mug shot URL (ID: %s)', inmate.id)
         uri = (
             'http://dpdjailview.cityofdenton.com/'
             'ImageHandler.ashx?type=image&imageID={mug_id}'
@@ -140,7 +134,7 @@ def get_mug_shots(inmates, bucket):
             response = opener.open(uri)
             image_data = response.read()
         except urllib.error.HTTPError as e:
-            logger.warning(
+            log.warning(
                 'Unable to retrieve inmate-ID %s due to HTTP %s: %r',
                 inmate.id,
                 e.code,
@@ -173,7 +167,7 @@ def _save_mug_shot_to_s3(bucket, inmate):
         replace=False,
         policy='public-read',
     )
-    log.debug('Saved mugshot for inmate-ID %s to S3: %r', inmate.id, key)
+    log.info('Saved mugshot for inmate-ID %s to S3: %r', inmate.id, key)
 
 
 def save_mug_shots(inmates):
@@ -187,7 +181,6 @@ def save_mug_shots(inmates):
     Args:
         inmates: List of Inmate objects to be processed.
     """
-    logger = logging.getLogger('save_mug_shots')
     path = "mugs/"
     # Make mugs/ folder
     try:
@@ -207,21 +200,20 @@ def save_mug_shots(inmates):
         try:
             old_size = os.path.getsize(path + inmate.id + '.jpg')
             if old_size == len(inmate.mug):
-                logger.debug("Skipping save of mug shot (ID: %s)", inmate.id)
+                log.debug('Skipping save of mug shot (ID: %s)', inmate.id)
                 continue
             else:
                 for filename in os.listdir(path):
                     if (fnmatch.fnmatch(filename, '{}_*.jpg'.format(inmate.id))
                             and os.path.getsize(filename) == len(inmate.mug)):
-                        logger.debug(
-                            "Skipping save of mug shot (ID: %s)",
+                        log.debug(
+                            'Skipping save of mug shot (ID: %s)',
                             inmate.id,
                         )
                         continue
-                logger.debug(
-                    "Saving mug shot under alternate filename (ID: {})".format(
-                        inmate.id
-                    )
+                log.debug(
+                    'Saving mug shot under alternate filename (ID: %s)',
+                    inmate.id,
                 )
                 location = '{path}{inmate_id}_{timestamp}.jpg'.format(
                     path=path,
@@ -252,13 +244,12 @@ def log_inmates(inmates, recent=False, mode='a'):
             Specifying True will overwrite the separate recent log, which
             is representative of the inmates seen during the last check.
     """
-    logger = logging.getLogger('log_inmates')
     if recent:
         location = RECENT_LOG_FILENAME
         mode = 'w'
     else:
         location = LOG_FILENAME
-    logger.debug(
+    log.debug(
         'Saving inmates to {log_name} log'.format(
             log_name='recent' if recent else 'standard',
         )
@@ -266,7 +257,7 @@ def log_inmates(inmates, recent=False, mode='a'):
     with open(location, mode=mode, encoding='utf-8') as f:
         for inmate in inmates:
             if not recent:
-                logger.info("Recording Inmate:\n%s", inmate)
+                log.info('Recording Inmate:\n%s', inmate)
             f.write(inmate.to_json() + '\n')
 
 
@@ -281,12 +272,11 @@ def read_log(recent=False):
             is representative of the inmates seen during the last check.
             While this is not the default, it is the option most used.
     """
-    logger = logging.getLogger('read_log')
     if recent:
         location = RECENT_LOG_FILENAME
     else:
         location = LOG_FILENAME
-    logger.debug(
+    log.debug(
         'Reading inmates from {log_name} log'.format(
             log_name='recent' if recent else 'standard',
         )
@@ -328,7 +318,6 @@ def tweet_mug_shots(inmates):
     Args:
         inmates: List of Inmate objects to be processed.
     """
-    logger = logging.getLogger('tweet_mug_shots')
     twitter = Twython(
         app_key=APP_KEY,
         app_secret=APP_SECRET,
@@ -336,11 +325,11 @@ def tweet_mug_shots(inmates):
         oauth_token_secret=OAUTH_TOKEN_SECRET,
     )
     for inmate in inmates:
-        logger.info('Posting to Twitter (ID: %s)', inmate.id)
+        log.info('Posting to Twitter (ID: %s)', inmate.id)
         caption = inmate.get_twitter_message()
-        logger.debug('Status: {status!r}'.format(status=caption))
+        log.debug('Status: {status!r}'.format(status=caption))
         mug_shot_fname = 'mugs/{}'.format(most_recent_mug(inmate))
-        logger.debug('Media fname: {fname}'.format(fname=mug_shot_fname))
+        log.debug('Media fname: {fname}'.format(fname=mug_shot_fname))
         try:
             with open(mug_shot_fname, mode='rb') as mug_shot_file:
                 inmate.tweet = twitter.update_status_with_media(
@@ -349,18 +338,17 @@ def tweet_mug_shots(inmates):
                 )
         except Exception as error:
             inmate.posted = False
-            logger.error(
-                'Exception while trying to tweet ID-{id}: {error!r}'.format(
-                    id=inmate.id,
-                    error=error,
-                )
+            log.error(
+                'Exception while trying to tweet ID-%s: %r',
+                inmate.id,
+                error,
             )
             # TODO(bwbaugh|2014-06-01): Change to handle known types of
             # exceptions without having to re-raise.
             if str(error).endswith('Status is a duplicate.'):
                 # Should only happen when recovering the script after
                 # fixing / handling an error.
-                logger.warn('Status is a duplicate. Suppressing error')
+                log.warn('Status is a duplicate. Suppressing error')
                 inmate.posted = True
             else:
                 raise
@@ -374,7 +362,6 @@ def get_most_inmates_count():
     Returns:
         A tuple with the last most_count and the on_date when that occurred.
     """
-    logger = logging.getLogger('get_most_inmates_count')
     most_count, on_date = (None, None)
     try:
         with open('dentonpolice_most.txt', mode='r') as f:
@@ -383,19 +370,18 @@ def get_most_inmates_count():
     except IOError as e:
         # No such file
         if e.errno == errno.ENOENT:
-            logger.warning('No file with statistics found.')
+            log.warning('No file with statistics found.')
         else:
             raise
     except ValueError:
-        logger.warning('Could not parse data from file.')
+        log.warning('Could not parse data from file.')
     return (most_count, on_date)
 
 
 def log_most_inmates_count(count):
     """Logs to file the most-count and the current date."""
-    logger = logging.getLogger('log_most_inmates_count')
     now = now = datetime.datetime.now().strftime('%m/%d/%y %H:%M:%S')
-    logger.info('Logging most inmates count at %s on %s', count, now)
+    log.info('Logging most inmates count at %s on %s', count, now)
     with open('dentonpolice_most.txt', mode='w') as f:
         f.write('{}\n{}'.format(count, now))
 
@@ -439,7 +425,6 @@ def parse_inmates(html):
 
 def extract_inmates_to_process(inmates):
     """Filter the inmates and return only the ones that should be posted."""
-    logger = logging.getLogger('extract_inmates_to_process')
     # Load the list of inmates seen last time we got the page
     recent_inmates = read_log(recent=True)
     # Find inmates that no longer appear on the page that may not be logged.
@@ -467,7 +452,7 @@ def extract_inmates_to_process(inmates):
     for i in range(len(inmates)):
         for j in range(i + 1, len(inmates)):
             if inmates[i] and inmates[j] and inmates[i].id == inmates[j].id:
-                logger.warning(
+                log.warning(
                     'Removing duplicate found in inmates (ID: %s)',
                     inmates[i].id,
                 )
@@ -488,7 +473,6 @@ def find_missing(inmates, recent_inmates):
         A list of inmates that appear to be missing and that were
         likely not logged during previous page checks.
     """
-    logger = logging.getLogger('find_missing')
     # Since we try not to log inmates that don't have charges listed,
     # make sure that any inmate on the recent list that doesn't appear
     # on the current page get logged even if they don't have charges.
@@ -523,8 +507,8 @@ def find_missing(inmates, recent_inmates):
                 if not most_recent_mug(recent):
                     log_inmates([recent])
     if len(missing) > 0:
-        logger.info(
-            "Found %s inmates without charges that are now missing",
+        log.info(
+            'Found %s inmates without charges that are now missing',
             len(missing),
         )
     return missing
@@ -532,8 +516,7 @@ def find_missing(inmates, recent_inmates):
 
 def tweet_most_count(count, most_count, on_date):
     """Tweet that we have seen the most number of inmates in jail at once."""
-    logger = logging.getLogger('tweet_most_count')
-    logger.info('Posting new record of %s inmates', count)
+    log.info('Posting new record of %s inmates', count)
     # Post to twitter and log
     now = datetime.datetime.now().strftime('%m/%d/%y %H:%M:%S')
     message = (
@@ -573,7 +556,6 @@ def main(bucket):
     4.  Save a log.
     5.  Upload to Twitter.
     """
-    logger = logging.getLogger('main')
     html = get_jail_report()
     if html is None:
         # Without a report, there is nothing to do.
@@ -597,17 +579,16 @@ def main(bucket):
     if inmates:
         try:
             get_mug_shots(inmates=inmates, bucket=bucket)
-        except urllib.error.HTTPError as e:
-            # Service Unavailable
-            if e.code == 503:
-                reason = "HTTP Error 503: Service Unavailable"
-            else:
-                reason = e
-            logger.warning("get_mug_shots: %r", reason)
-            return
-        except http.client.HTTPException as e:
-            logger.warning("get_mug_shots: %r", e)
-            return
+        except urllib.error.HTTPError as error:
+            log.error(
+                'HTTP %r error while getting mug shots: %r',
+                error.code,
+                error,
+            )
+            return None
+        except (http.client.HTTPException, urllib.error.URLError) as error:
+            log.error('Other error while getting mug shots: %r', error)
+            return None
         save_mug_shots(inmates)
         # Discard inmates that we couldn't save a mug shot for.
         inmates = [inmate for inmate in inmates if inmate.mug]

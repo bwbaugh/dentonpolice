@@ -21,6 +21,8 @@ import time
 
 import boto.s3
 import raven
+import raven.conf
+import raven.handlers.logging
 
 from dentonpolice import config_dict
 from dentonpolice.logic import main
@@ -43,28 +45,34 @@ if 'aws' in config_dict:
         region_name=config_dict['aws']['s3']['region'],
     )
     bucket = conn.get_bucket(bucket_name=config_dict['aws']['s3']['bucket'])
+    log.info('AWS configured to use bucket %r', bucket)
 else:
     bucket = None
 
 if 'sentry' in config_dict:
     sentry_dsn = config_dict['sentry']['dsn']
+    log.info('Sentry logging configured.')
 else:
     sentry_dsn = None
 sentry_client = raven.Client(dsn=sentry_dsn)
+# Send any ERROR level logs to Sentry.
+sentry_handler = raven.handlers.logging.SentryHandler(sentry_client)
+raven.conf.setup_logging(sentry_handler)
 
 # Continuously checks the custody report page every SECONDS_BETWEEN_CHECKS.
 logging.info("Starting main loop.")
 while True:
     try:
         main(bucket=bucket)
-        logging.debug("Main loop: going to sleep for %s seconds",
-                      SECONDS_BETWEEN_CHECKS)
+        log.info(
+            'Sleeping for %s seconds.',
+            SECONDS_BETWEEN_CHECKS,
+        )
         time.sleep(SECONDS_BETWEEN_CHECKS)
     except KeyboardInterrupt:
-        print("Bye!")
-        logging.shutdown()
+        log.info('Exiting due to SIGINT.')
         break
     except:
         ident = sentry_client.get_ident(sentry_client.captureException())
-        log.error('Uncaught exception ident: %s', ident)
+        log.info('Uncaught exception ident: %s', ident)
         raise
