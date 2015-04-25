@@ -58,6 +58,7 @@ else:
 sentry_client = raven.Client(dsn=sentry_dsn)
 # Send any ERROR level logs to Sentry.
 sentry_handler = raven.handlers.logging.SentryHandler(sentry_client)
+sentry_handler.setLevel(logging.ERROR)
 raven.conf.setup_logging(sentry_handler)
 
 # Continuously checks the custody report page every SECONDS_BETWEEN_CHECKS.
