@@ -24,6 +24,7 @@ setuptools.setup(
     install_requires=[
         'PyYAML>=3.11',
         'boto>=2.38.0',
+        'raven>=5.2.0',
         'twython>=3.1.2',
     ],
 )

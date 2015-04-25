@@ -20,6 +20,7 @@ import logging
 import time
 
 import boto.s3
+import raven
 
 from dentonpolice import config_dict
 from dentonpolice.logic import main
@@ -35,6 +36,8 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
 )
 
+log = logging.getLogger(__name__)
+
 if 'aws' in config_dict:
     conn = boto.s3.connect_to_region(
         region_name=config_dict['aws']['s3']['region'],
@@ -42,6 +45,12 @@ if 'aws' in config_dict:
     bucket = conn.get_bucket(bucket_name=config_dict['aws']['s3']['bucket'])
 else:
     bucket = None
+
+if 'sentry' in config_dict:
+    sentry_dsn = config_dict['sentry']['dsn']
+else:
+    sentry_dsn = None
+sentry_client = raven.Client(dsn=sentry_dsn)
 
 # Continuously checks the custody report page every SECONDS_BETWEEN_CHECKS.
 logging.info("Starting main loop.")
@@ -55,3 +64,7 @@ while True:
         print("Bye!")
         logging.shutdown()
         break
+    except:
+        ident = sentry_client.get_ident(sentry_client.captureException())
+        log.error('Uncaught exception ident: %s', ident)
+        raise

@@ -19,3 +19,7 @@ twitter:
 #   s3:
 #     region: some_region
 #     bucket: some_bucket
+
+# If the `sentry` key exists, error reporting via Sentry will be used.
+# sentry:
+#   dsn: some_dsn_for_your_project
