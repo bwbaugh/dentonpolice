@@ -3,7 +3,20 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-# TODO(bwbaugh|2015-04-19): Better signal handling in the app.
-# Simulate a ^C. It's okay if the program isn't running.
-# XXX: Using `SIGTERM` since `SIGINT` wasn't working.
-pkill --full --exact -SIGTERM '/srv/dentonpolice/venv/bin/python -m dentonpolice' || true
+install_dir="/srv/dentonpolice"
+runit_sv_dir="/etc/sv"
+runit_service_dir="/etc/service"
+
+sv stop arrestinfo-crawler-1
+unlink ${runit_service_dir}/arrestinfo-crawler-1
+sleep 5
+rm -rf ${runit_sv_dir}/arrestinfo-crawler-1
+sleep 5
+
+# Using `pushd` and `popd` to play nice with the CloudDeploy agent.
+pushd ${install_dir}
+
+rm -rf venv/
+
+# Using `pushd` and `popd` to play nice with the CloudDeploy agent.
+popd

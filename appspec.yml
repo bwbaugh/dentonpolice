@@ -7,9 +7,14 @@ files:
   destination: /srv/dentonpolice/
 - source: /config.yaml
   destination: /srv/dentonpolice/
-- source: /deploy
-  destination: /srv/dentonpolice/deploy/
+- source: /Procfile
+  destination: /srv/dentonpolice/
+- source: /deploy/svlogd/config
+  destination: /var/log/arrestinfo/crawler-1
 hooks:
+  BeforeInstall:
+  - location: deploy/before_install.sh
+    timeout: 180
   AfterInstall:
   - location: deploy/after_install.sh
     timeout: 60

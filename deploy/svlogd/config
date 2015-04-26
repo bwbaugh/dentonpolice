@@ -1,0 +1,6 @@
+# maximum file size in bytes.
+s10485760
+# number of old log files.
+n0
+# maximum age in seconds.
+t86400
