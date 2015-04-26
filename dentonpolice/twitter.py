@@ -95,7 +95,7 @@ def get_twitter_message(inmate):
             if charge['amount']:
                 bond += int(float(charge['amount'][1:]))
         if bond:
-            locale.setlocale(locale.LC_ALL, '')
+            locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
             bond = locale.currency(bond, grouping=True)[:-3]
             parts.append('Bond: ' + bond)
     # Append list of charges
