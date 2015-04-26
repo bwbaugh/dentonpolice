@@ -223,35 +223,60 @@ def find_missing(inmates, recent_inmates):
     # inmates with the only charge reason being 'LOCAL MUNICIPAL WARRANT'
     missing = []
     for recent in recent_inmates:
+        log.debug('Checking if recent inmate-ID %s is missing', recent.id)
         potential = False
-        if not recent.charges or not storage.most_recent_mug(recent):
+        if not recent.charges:
+            log.debug('Recent inmate-ID %s has no charges.', recent.id)
+            potential = True
+        elif not storage.most_recent_mug(recent):
+            log.debug('Recent inmate-ID %s has no recent mug.', recent.id)
             potential = True
         elif (len(recent.charges) == 1 and
               re.search(r'WARRANT(?:S)?\Z', recent.charges[0]['charge'])):
+            log.debug('Recent inmate-ID %s has one warrant.', recent.id)
             potential = True
         # add if the inmate is missing from the current report or if
         # the inmate has had their charge updated.
-        if potential:
-            found = False
-            for inmate in inmates:
-                if recent.id == inmate.id:
-                    found = True
-                    if not recent.charges and not inmate.charges:
-                        break
-                    if (inmate.charges and
-                        re.search(r'WARRANT(?:S)?\Z',
-                                  inmate.charges[0]['charge']) is None):
-                        missing.append(inmate)
+        if not potential:
+            log.debug('Recent inmate-ID %s apparently not missing.', recent.id)
+            continue
+        found = False
+        for inmate in inmates:
+            if recent.id == inmate.id:
+                log.debug('Recent inmate-ID %s in current report.', recent.id)
+                found = True
+                if not recent.charges and not inmate.charges:
+                    log.debug(
+                        'Recent inmate-ID %s still has no charges.',
+                        recent.id,
+                    )
                     break
-            if not found:
-                missing.append(recent)
-                # if couldn't download the mug before and missing now,
-                # go ahead and log it for future reference
-                if not storage.most_recent_mug(recent):
-                    storage.log_inmates([recent])
-    if len(missing) > 0:
-        log.info(
-            'Found %s inmates without charges that are now missing',
-            len(missing),
-        )
+                if (inmate.charges and
+                    re.search(r'WARRANT(?:S)?\Z',
+                              inmate.charges[0]['charge']) is None):
+                    log.debug(
+                        'Recent inmate-ID %s no longer has warrant.',
+                        recent.id,
+                    )
+                    missing.append(inmate)
+                break
+        if not found:
+            missing.append(recent)
+            # if couldn't download the mug before and missing now,
+            # go ahead and log it for future reference
+            if not storage.most_recent_mug(recent):
+                log.debug(
+                    (
+                        'Going to log recent inmate-ID %s since not '
+                        'found and no recent mug.'
+                    ),
+                    recent.id,
+                )
+                storage.log_inmates([recent])
+    log.info(
+        'Found %s inmates without charges that are now missing',
+        len(missing),
+    )
+    for inmate in missing:
+        log.debug('Inmate that is now missing: %s', inmate)
     return missing

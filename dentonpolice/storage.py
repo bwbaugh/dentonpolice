@@ -39,19 +39,23 @@ def save_mug_shots(inmates):
     for inmate in inmates:
         # Skip inmates with no mug shot
         if inmate.mug is None:
+            log.debug('Skipping inmate-ID %s with no mug shot.', inmate.id)
             continue
         # Check if there is already a mug shot for this inmate
         try:
             old_size = os.path.getsize(path + inmate.id + '.jpg')
             if old_size == len(inmate.mug):
-                log.debug('Skipping save of mug shot (ID: %s)', inmate.id)
+                log.debug(
+                    'Skipping already saved mug shot (ID: %s)',
+                    inmate.id,
+                )
                 continue
             else:
                 for filename in os.listdir(path):
                     if (fnmatch.fnmatch(filename, '{}_*.jpg'.format(inmate.id))
                             and os.path.getsize(filename) == len(inmate.mug)):
                         log.debug(
-                            'Skipping save of mug shot (ID: %s)',
+                            'Skipping already saved of mug shot (ID: %s)',
                             inmate.id,
                         )
                         continue
@@ -75,6 +79,11 @@ def save_mug_shots(inmates):
             else:
                 raise
         # Save the mug shot
+        log.debug(
+            'Writing mug shot for inmate-ID %s to: %s',
+            inmate.id,
+            location,
+        )
         with open(location, mode='wb') as f:
             f.write(inmate.mug)
 
@@ -93,15 +102,17 @@ def log_inmates(inmates, recent=False, mode='a'):
         mode = 'w'
     else:
         location = LOG_FILENAME
-    log.debug(
-        'Saving inmates to {log_name} log'.format(
-            log_name='recent' if recent else 'standard',
-        )
-    )
+    if recent:
+        log_function = log.debug
+    else:
+        log_function = log.info
     with open(location, mode=mode, encoding='utf-8') as f:
         for inmate in inmates:
-            if not recent:
-                log.info('Recording Inmate:\n%s', inmate)
+            log_function(
+                'Recording inmate to the %s log: %s',
+                'recent' if recent else 'standard',
+                inmate,
+            )
             f.write(inmate.to_json() + '\n')
 
 
@@ -154,8 +165,20 @@ def most_recent_mug(inmate):
         # conditional is for newer timestamps.
         if (fnmatch.fnmatch(filename, '{}.jpg'.format(inmate.id)) or
                 fnmatch.fnmatch(filename, '{}_*.jpg'.format(inmate.id))):
+            log.debug(
+                'Found recent mug candidate for inmate-ID %s: %r',
+                inmate.id,
+                filename,
+            )
             if filename > best:
                 best = filename
+                log.debug(
+                    'Best recent mug candidate so far for inmate-ID %s: %r',
+                    inmate.id,
+                    filename,
+                )
+    if not best:
+        log.debug('Found no recent mug shot for inmate-ID %s.', inmate.id)
     return best
 
 
