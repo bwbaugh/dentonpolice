@@ -3,10 +3,9 @@
 import datetime
 import errno
 import fnmatch
+import json
 import logging
 import os
-
-from dentonpolice.inmate import Inmate
 
 
 LOG_FILENAME = 'dentonpolice_log.json'
@@ -111,11 +110,14 @@ def read_log(recent=False):
 
     Mug shot data is not retrieved, neither from file nor server.
 
-    Args:
-        recent: Default of False will read from the main log file.
-            Specifying True will read the separate recent log, which
-            is representative of the inmates seen during the last check.
-            While this is not the default, it is the option most used.
+    :param recent: Default of False will read from the main log file.
+        Specifying True will read the separate recent log, which
+        is representative of the inmates seen during the last check.
+        While this is not the default, it is the option most used.
+    :type recent: bool
+
+    :returns: The raw inmate objects from the log.
+    :rtype: list of dict
     """
     if recent:
         location = RECENT_LOG_FILENAME
@@ -126,18 +128,18 @@ def read_log(recent=False):
             log_name='recent' if recent else 'standard',
         )
     )
-    inmates = []
+    inmate_list = []
     try:
         with open(location, encoding='utf-8') as f:
             for line in f:
-                inmates.append(Inmate.from_json(line))
+                inmate_list.append(json.loads(line))
     except IOError as e:
         # No such file
         if e.errno == errno.ENOENT:
             pass
         else:
             raise
-    return inmates
+    return inmate_list
 
 
 def most_recent_mug(inmate):
