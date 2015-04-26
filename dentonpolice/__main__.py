@@ -25,7 +25,7 @@ import raven.conf
 import raven.handlers.logging
 
 from dentonpolice import config_dict
-from dentonpolice.logic import main
+from dentonpolice import report_downloader
 
 
 # How often to check the City Jail Custody Report webpage
@@ -65,7 +65,7 @@ raven.conf.setup_logging(sentry_handler)
 log.info('Starting main loop.')
 while True:
     try:
-        main(bucket=bucket)
+        report_downloader.main(bucket=bucket)
         log.info(
             'Sleeping for %s seconds.',
             SECONDS_BETWEEN_CHECKS,
