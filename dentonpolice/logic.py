@@ -11,36 +11,16 @@ import fnmatch
 import logging
 import os
 import re
-import sys
 import urllib
 import urllib.error
 import urllib.request
 
 import http.client
 
-try:
-    from twython import Twython
-except ImportError:
-    sys.stderr.write(
-        'Unable to load Twitter library. Disabling Twitter features.\n'
-    )
-    Twython = None
-
-from dentonpolice import config_dict
 from dentonpolice import jail
+from dentonpolice import twitter
 from dentonpolice.inmate import Inmate
 
-
-# Load the config values here to get a KeyError as early as possible.
-APP_KEY = config_dict['twitter']['API key']
-APP_SECRET = config_dict['twitter']['API secret']
-OAUTH_TOKEN = config_dict['twitter']['Access token']
-OAUTH_TOKEN_SECRET = config_dict['twitter']['Access token secret']
-
-IS_TWITTER_AVAILABLE = (
-    Twython is not None and
-    APP_KEY and APP_SECRET and OAUTH_TOKEN and OAUTH_TOKEN_SECRET
-)
 
 LOG_FILENAME = 'dentonpolice_log.json'
 RECENT_LOG_FILENAME = 'dentonpolice_recent.json'
@@ -190,50 +170,6 @@ def most_recent_mug(inmate):
     return best
 
 
-def tweet_mug_shots(inmates):
-    """Posts to Twitter each inmate using their mug shot and caption.
-
-    Args:
-        inmates: List of Inmate objects to be processed.
-    """
-    twitter = Twython(
-        app_key=APP_KEY,
-        app_secret=APP_SECRET,
-        oauth_token=OAUTH_TOKEN,
-        oauth_token_secret=OAUTH_TOKEN_SECRET,
-    )
-    for inmate in inmates:
-        log.info('Posting to Twitter (ID: %s)', inmate.id)
-        caption = inmate.get_twitter_message()
-        log.debug('Status: {status!r}'.format(status=caption))
-        mug_shot_fname = 'mugs/{}'.format(most_recent_mug(inmate))
-        log.debug('Media fname: {fname}'.format(fname=mug_shot_fname))
-        try:
-            with open(mug_shot_fname, mode='rb') as mug_shot_file:
-                inmate.tweet = twitter.update_status_with_media(
-                    status=caption,
-                    media=mug_shot_file,
-                )
-        except Exception as error:
-            inmate.posted = False
-            log.error(
-                'Exception while trying to tweet ID-%s: %r',
-                inmate.id,
-                error,
-            )
-            # TODO(bwbaugh|2014-06-01): Change to handle known types of
-            # exceptions without having to re-raise.
-            if str(error).endswith('Status is a duplicate.'):
-                # Should only happen when recovering the script after
-                # fixing / handling an error.
-                log.warn('Status is a duplicate. Suppressing error')
-                inmate.posted = True
-            else:
-                raise
-        else:
-            inmate.posted = True
-
-
 def get_most_inmates_count():
     """Returns the filename of the most recent mug shot for the Inmate.
 
@@ -355,37 +291,6 @@ def find_missing(inmates, recent_inmates):
     return missing
 
 
-def tweet_most_count(count, most_count, on_date):
-    """Tweet that we have seen the most number of inmates in jail at once."""
-    log.info('Posting new record of %s inmates', count)
-    # Post to twitter and log
-    now = datetime.datetime.now().strftime('%m/%d/%y %H:%M:%S')
-    message = (
-        'New Record: {count} inmates listed in jail as of {time}.'.format(
-            count=count,
-            time=now,
-        )
-    )
-    if most_count and on_date:
-        message += ' Last record was {count} inmates on {date}'.format(
-            count=most_count,
-            date=on_date,
-        )
-    # TODO(bwbaugh|2014-06-01): Twitter will auto shorten the URL, so
-    # we might be able to use a smaller length here.
-    jail_url = 'http://dpdjailview.cityofdenton.com/'
-    if len(message) + len(jail_url) + 1 <= 140:
-        message += ' ' + jail_url.decode('utf-8')
-    twitter = Twython(
-        app_key=APP_KEY,
-        app_secret=APP_SECRET,
-        oauth_token=OAUTH_TOKEN,
-        oauth_token_secret=OAUTH_TOKEN_SECRET,
-    )
-    twitter.update_status(status=message)
-    log_most_inmates_count(count)
-
-
 def main(bucket):
     """Main function
 
@@ -435,8 +340,17 @@ def main(bucket):
         inmates = [inmate for inmate in inmates if inmate.mug]
         # Log and post to Twitter.
         try:
-            if IS_TWITTER_AVAILABLE:
-                tweet_mug_shots(inmates)
+            if twitter.IS_TWITTER_AVAILABLE:
+                for inmate in inmates:
+                    mug_shot_fname = 'mugs/{}'.format(
+                        most_recent_mug(inmate),
+                    )
+                    log.debug('Media fname: %s', mug_shot_fname)
+                    with open(mug_shot_fname, mode='rb') as mug_shot_file:
+                        twitter.tweet_mug_shots(
+                            inmate=inmate,
+                            mug_shot_file=mug_shot_file,
+                        )
         finally:
             # Still want to log even if there was an uncaught error
             # while posting to Twitter.
@@ -452,5 +366,7 @@ def main(bucket):
     (most_count, on_date) = get_most_inmates_count()
     count = len(inmates_original)
     if not most_count or count > most_count:
-        if IS_TWITTER_AVAILABLE:
-            tweet_most_count(count, most_count, on_date)
+        if twitter.IS_TWITTER_AVAILABLE:
+            twitter.tweet_most_count(count, most_count, on_date)
+            # Only log if we published the record.
+            log_most_inmates_count(count)
