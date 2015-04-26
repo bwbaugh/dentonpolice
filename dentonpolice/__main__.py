@@ -38,6 +38,8 @@ logging.basicConfig(
 )
 # Silence unneeded debug statements from boto.
 logging.getLogger('boto').setLevel(logging.INFO)
+# Don't write config values to the log. We don't use schemas yet.
+logging.getLogger('staticconf.config').setLevel(logging.WARNING)
 
 log = logging.getLogger(__name__)
 
