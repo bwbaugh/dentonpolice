@@ -1,6 +1,10 @@
 # Default configuration values are defined here.
 # Put values in a `config-env.yaml` file to override these defaults.
 
+# Minimum number of seconds since getting the last report. Useful for
+#   throttling automatic restarts from process supervisors.
+minimum_report_age_s: 240
+
 # Proxy setup
 # If Polipo isn't running, you might need to start it manually after Tor.
 proxy:
