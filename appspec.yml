@@ -5,6 +5,8 @@ files:
   destination: /srv/dentonpolice/dentonpolice
 - source: /requirements.txt
   destination: /srv/dentonpolice/
+- source: /config.yaml
+  destination: /srv/dentonpolice/
 - source: /deploy
   destination: /srv/dentonpolice/deploy/
 hooks:

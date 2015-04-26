@@ -1,3 +1,6 @@
+# Default configuration values are defined here.
+# Put values in a `config-env.yaml` file to override these defaults.
+
 # Proxy setup
 # If Polipo isn't running, you might need to start it manually after Tor.
 proxy:
@@ -9,10 +12,11 @@ proxy:
 # Twitter account info.
 # Used to post most number of inmates in jail at once information.
 twitter:
-  API key: api_key_from_application_settings
-  API secret: api_secret_from_application_settings
-  Access token: access_token_from_your_access_token
-  Access token secret: access_token_secret_from_your_access_token
+  enabled: false
+  api_key: api_key_from_application_settings
+  api_ssecret: api_secret_from_application_settings
+  access_token: access_token_from_your_access_token
+  access_token_secret: access_token_secret_from_your_access_token
 
 # If the `aws` key exists, then the jail report will be saved to S3.
 # aws:

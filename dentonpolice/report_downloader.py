@@ -77,7 +77,8 @@ def main(bucket):
         inmates = [inmate for inmate in inmates if inmate.mug]
         # Log and post to Twitter.
         try:
-            if twitter.IS_TWITTER_AVAILABLE:
+            twitter_client = twitter.get_twitter_client()
+            if twitter_client is not None:
                 for inmate in inmates:
                     mug_shot_fname = 'mugs/{}'.format(
                         storage.most_recent_mug(inmate),
@@ -85,6 +86,7 @@ def main(bucket):
                     log.debug('Media fname: %s', mug_shot_fname)
                     with open(mug_shot_fname, mode='rb') as mug_shot_file:
                         twitter.tweet_mug_shots(
+                            twitter_client=twitter_client,
                             inmate=inmate,
                             mug_shot_file=mug_shot_file,
                         )
@@ -103,7 +105,13 @@ def main(bucket):
     (most_count, on_date) = storage.get_most_inmates_count()
     count = len(inmates_original)
     if not most_count or count > most_count:
-        if twitter.IS_TWITTER_AVAILABLE:
-            twitter.tweet_most_count(count, most_count, on_date)
+        twitter_client = twitter.get_twitter_client()
+        if twitter_client is not None:
+            twitter.tweet_most_count(
+                twitter_client=twitter_client,
+                count=count,
+                most_count=most_count,
+                on_date=on_date,
+            )
             # Only log if we published the record.
             storage.log_most_inmates_count(count)

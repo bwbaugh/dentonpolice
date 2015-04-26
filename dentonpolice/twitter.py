@@ -4,49 +4,39 @@ import datetime
 import locale
 import logging
 import re
-import sys
 
-try:
-    from twython import Twython
-except ImportError:
-    sys.stderr.write(
-        'Unable to load Twitter library. Disabling Twitter features.\n'
-    )
-    Twython = None
+import staticconf
+from twython import Twython
 
-from dentonpolice import config_dict
 from dentonpolice import zodiac
 
 
 log = logging.getLogger(__name__)
 
-# Load the config values here to get a KeyError as early as possible.
-APP_KEY = config_dict['twitter']['API key']
-APP_SECRET = config_dict['twitter']['API secret']
-OAUTH_TOKEN = config_dict['twitter']['Access token']
-OAUTH_TOKEN_SECRET = config_dict['twitter']['Access token secret']
-
-IS_TWITTER_AVAILABLE = (
-    Twython is not None and
-    APP_KEY and APP_SECRET and OAUTH_TOKEN and OAUTH_TOKEN_SECRET
-)
-
 URL_LENGTH = 23  # Assume HTTPS, otherwise HTTP is 22.
 TWEET_LIMIT = 140 - URL_LENGTH  # The mug shot is included as a link.
 
 
-def tweet_mug_shots(inmate, mug_shot_file):
+def get_twitter_client():
+    if not staticconf.read_bool('twitter.enabled', default=False):
+        return None
+    return Twython(
+        app_key=staticconf.read('twitter.api_key'),
+        app_secret=staticconf.read('twitter.api_ssecret'),
+        oauth_token=staticconf.read('twitter.access_token'),
+        oauth_token_secret=staticconf.read('twitter.access_token_secret'),
+    )
+
+
+def tweet_mug_shots(twitter_client, inmate, mug_shot_file):
     """Posts to Twitter each inmate using their mug shot and caption.
 
     Args:
         inmates: List of Inmate objects to be processed.
     """
-    twitter_client = Twython(
-        app_key=APP_KEY,
-        app_secret=APP_SECRET,
-        oauth_token=OAUTH_TOKEN,
-        oauth_token_secret=OAUTH_TOKEN_SECRET,
-    )
+    if twitter_client is None:
+        log.info('Not posting mug shot since Twitter is disabled.')
+        return
     log.info('Posting to Twitter (ID: %s)', inmate.id)
     caption = get_twitter_message(inmate)
     log.debug('Status: {status!r}'.format(status=caption))
@@ -166,8 +156,10 @@ def get_twitter_message(inmate):
         return message_with_petition
 
 
-def tweet_most_count(count, most_count, on_date):
+def tweet_most_count(twitter_client, count, most_count, on_date):
     """Tweet that we have seen the most number of inmates in jail at once."""
+    if twitter_client is None:
+        log.info('Not posting most-count since Twitter is disabled.')
     log.info('Posting new record of %s inmates', count)
     # Post to twitter and log
     now = datetime.datetime.now().strftime('%m/%d/%y %H:%M:%S')
@@ -187,10 +179,4 @@ def tweet_most_count(count, most_count, on_date):
     jail_url = 'http://dpdjailview.cityofdenton.com/'
     if len(message) + len(jail_url) + 1 <= 140:
         message += ' ' + jail_url.decode('utf-8')
-    twitter = Twython(
-        app_key=APP_KEY,
-        app_secret=APP_SECRET,
-        oauth_token=OAUTH_TOKEN,
-        oauth_token_secret=OAUTH_TOKEN_SECRET,
-    )
-    twitter.update_status(status=message)
+    twitter_client.update_status(status=message)

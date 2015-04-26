@@ -22,6 +22,7 @@ setuptools.setup(
     # all implicit dependencies i.e., the packages required by the
     # packages that the service depends on.
     install_requires=[
+        'PyStaticConfiguration>=0.9.0',
         'PyYAML>=3.11',
         'boto>=2.38.0',
         'raven>=5.2.0',

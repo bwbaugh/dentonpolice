@@ -23,8 +23,9 @@ import boto.s3
 import raven
 import raven.conf
 import raven.handlers.logging
+import staticconf
 
-from dentonpolice import config_dict
+from dentonpolice import config
 from dentonpolice import report_downloader
 
 
@@ -40,18 +41,20 @@ logging.getLogger('boto').setLevel(logging.INFO)
 
 log = logging.getLogger(__name__)
 
+config.load_config()
 
-if 'aws' in config_dict:
+
+if staticconf.read('aws.s3.bucket', default=None):
     conn = boto.s3.connect_to_region(
-        region_name=config_dict['aws']['s3']['region'],
+        region_name=staticconf.read('aws.s3.region'),
     )
-    bucket = conn.get_bucket(bucket_name=config_dict['aws']['s3']['bucket'])
+    bucket = conn.get_bucket(bucket_name=staticconf.read('aws.s3.bucket'))
     log.info('AWS configured to use bucket %r', bucket)
 else:
     bucket = None
 
-if 'sentry' in config_dict:
-    sentry_dsn = config_dict['sentry']['dsn']
+if staticconf.read('sentry.dsn', default=None):
+    sentry_dsn = staticconf.read('sentry.dsn')
     log.info('Sentry logging configured.')
 else:
     sentry_dsn = None

@@ -7,8 +7,8 @@ import urllib.request
 
 import boto.s3.key
 import http.client
+import staticconf
 
-from dentonpolice import config_dict
 from dentonpolice.inmate import Inmate
 
 
@@ -26,23 +26,27 @@ _dlInmates_Charges_\d+_lblBondOrFine_\d+">(?P<type>.*?)</span>.*?
 _dlInmates_Charges_\d+_lblAmount_\d+">(?P<amount>.*?)</span>
 """, re.DOTALL | re.X)
 
-# Proxy setup
-# If Polipo isn't running, you might need to start it manually after Tor,
-# and if so be sure to use whatever port it is listening on (such as 8123).
-# The default port for Polipo used in the Tor Vidalia Bundle is 8118.
-# Use a proxy; in this case set to use Polipo (through Tor)
-proxy_support = urllib.request.ProxyHandler({
-    'http': '{host}:{port}'.format(
-        host=config_dict['proxy']['host'],
-        port=config_dict['proxy']['port'],
-    )
-})
-opener = urllib.request.build_opener(proxy_support)
+
+def _get_opener():
+    """Use a proxy (Polipo through Tor) to send our requests through."""
+    # If Polipo isn't running, you might need to start it manually
+    #   after Tor, and if so be sure to use whatever port it is
+    #   listening on (such as 8123). The default port for Polipo used
+    #   in the Tor Vidalia Bundle is 8118.
+    proxy_support = urllib.request.ProxyHandler({
+        'http': '{host}:{port}'.format(
+            host=staticconf.read('proxy.host'),
+            port=staticconf.read('proxy.port'),
+        )
+    })
+    opener = urllib.request.build_opener(proxy_support)
+    return opener
 
 
 def get_jail_report():
     """Retrieves the Denton City Jail Custody Report webpage."""
     log.info('Getting Jail Report')
+    opener = _get_opener()
     try:
         response = opener.open('http://dpdjailview.cityofdenton.com/')
         log.debug('Reading jail report page')
@@ -102,6 +106,7 @@ def _make_jail_report_key_name(timestamp):
 def get_mug_shots(inmates, bucket):
     """Retrieves the mug shot for each Inmate and stores it in the Inmate."""
     log.info('Getting mug shots')
+    opener = _get_opener()
     for inmate in inmates:
         log.info('Opening mug shot URL (ID: %s)', inmate.id)
         uri = (
