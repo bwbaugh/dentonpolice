@@ -86,6 +86,8 @@ while True:
             SECONDS_BETWEEN_CHECKS,
         )
         time.sleep(SECONDS_BETWEEN_CHECKS)
+    except SystemExit:
+        raise
     except:
         ident = sentry_client.get_ident(sentry_client.captureException())
         log.info('Uncaught exception ident: %s', ident)
