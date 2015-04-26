@@ -17,6 +17,8 @@ If run as __main__, will loop and continuously check the report page.
 To run only once, execute this module's main() function.
 """
 import logging
+import signal
+import sys
 import time
 
 import boto.s3
@@ -66,8 +68,16 @@ sentry_handler = raven.handlers.logging.SentryHandler(sentry_client)
 sentry_handler.setLevel(logging.ERROR)
 raven.conf.setup_logging(sentry_handler)
 
+
+def handler(signum, frame):
+    log.info('Exiting due to signal-%s.', signum)
+    sys.exit(0)
+
+
 # Continuously checks the custody report page every SECONDS_BETWEEN_CHECKS.
 log.info('Starting main loop.')
+signal.signal(signal.SIGINT, handler)
+signal.signal(signal.SIGTERM, handler)
 while True:
     try:
         report_downloader.main(bucket=bucket)
@@ -76,9 +86,6 @@ while True:
             SECONDS_BETWEEN_CHECKS,
         )
         time.sleep(SECONDS_BETWEEN_CHECKS)
-    except KeyboardInterrupt:
-        log.info('Exiting due to SIGINT.')
-        break
     except:
         ident = sentry_client.get_ident(sentry_client.captureException())
         log.info('Uncaught exception ident: %s', ident)
