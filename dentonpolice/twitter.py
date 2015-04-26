@@ -22,7 +22,7 @@ def get_twitter_client():
         return None
     return Twython(
         app_key=staticconf.read('twitter.api_key'),
-        app_secret=staticconf.read('twitter.api_ssecret'),
+        app_secret=staticconf.read('twitter.api_secret'),
         oauth_token=staticconf.read('twitter.access_token'),
         oauth_token_secret=staticconf.read('twitter.access_token_secret'),
     )
