@@ -5,7 +5,7 @@ import mock
 import pytest
 import staticconf.testing
 
-from dentonpolice import report_downloader
+from dentonpolice import crawler
 
 
 class TestShouldThrottle(object):
@@ -44,7 +44,7 @@ class TestShouldThrottle(object):
             {'minimum_report_age_s': min_report_age},
         )
         # When we check if we should throttle due to the last report time
-        result = report_downloader._should_throttle(at_time=at_time)
+        result = crawler._should_throttle(at_time=at_time)
         # Then the result should be "<should_throttle>"
         assert result is should_throttle
 
@@ -53,6 +53,6 @@ class TestShouldThrottle(object):
         mock_getmtime.side_effect = OSError
         app_config.namespace.update_values({'minimum_report_age_s': 0})
         # When we check if we should throttle due to the last report time
-        result = report_downloader._should_throttle(at_time=0)
+        result = crawler._should_throttle(at_time=0)
         # Then we should not throttle
         assert result is False

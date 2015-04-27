@@ -28,7 +28,7 @@ import raven.handlers.logging
 import staticconf
 
 from dentonpolice import config
-from dentonpolice import report_downloader
+from dentonpolice import crawler
 
 
 # How often to check the City Jail Custody Report webpage
@@ -80,7 +80,7 @@ signal.signal(signal.SIGINT, handler)
 signal.signal(signal.SIGTERM, handler)
 while True:
     try:
-        report_downloader.main(bucket=bucket)
+        crawler.main(bucket=bucket)
         log.info(
             'Sleeping for %s seconds.',
             SECONDS_BETWEEN_CHECKS,
