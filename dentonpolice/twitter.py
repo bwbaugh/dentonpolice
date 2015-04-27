@@ -47,7 +47,7 @@ def tweet_mug_shots(twitter_client, inmate, mug_shot_file):
         )
     except Exception as error:
         inmate.posted = False
-        log.error(
+        log.warning(
             'Exception while trying to tweet ID-%s: %r',
             inmate.id,
             error,

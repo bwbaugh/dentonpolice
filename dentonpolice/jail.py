@@ -52,14 +52,14 @@ def get_jail_report():
         log.debug('Reading jail report page')
         html = response.read().decode('utf-8')
     except urllib.error.HTTPError as error:
-        log.error(
+        log.warning(
             'HTTP %r error while getting jail report: %r',
             error.code,
             error,
         )
         return None
     except (http.client.HTTPException, urllib.error.URLError) as error:
-        log.error('Other error while getting jail report: %r', error)
+        log.warning('Other error while getting jail report: %r', error)
         return None
     return html
 

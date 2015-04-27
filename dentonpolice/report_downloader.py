@@ -95,14 +95,14 @@ def main(bucket):
         try:
             jail.get_mug_shots(inmates=inmates, bucket=bucket)
         except urllib.error.HTTPError as error:
-            log.error(
+            log.warning(
                 'HTTP %r error while getting mug shots: %r',
                 error.code,
                 error,
             )
             return None
         except (http.client.HTTPException, urllib.error.URLError) as error:
-            log.error('Other error while getting mug shots: %r', error)
+            log.warning('Other error while getting mug shots: %r', error)
             return None
         storage.save_mug_shots(inmates)
         # Discard inmates that we couldn't save a mug shot for.
