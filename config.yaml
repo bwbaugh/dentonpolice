@@ -5,6 +5,13 @@
 #   throttling automatic restarts from process supervisors.
 minimum_report_age_s: 240
 
+path:
+  inmate_log: dentonpolice_log.json
+  most_inmate_count: dentonpolice_most.txt
+  mug_shot_dir: mugs
+  recent_inmate_log: dentonpolice_recent.json
+  recent_report_html: dentonpolice_recent.html
+
 # Proxy setup
 # If Polipo isn't running, you might need to start it manually after Tor.
 proxy:

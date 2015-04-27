@@ -7,9 +7,8 @@ import json
 import logging
 import os
 
+import staticconf
 
-LOG_FILENAME = 'dentonpolice_log.json'
-RECENT_LOG_FILENAME = 'dentonpolice_recent.json'
 
 log = logging.getLogger(__name__)
 
@@ -25,8 +24,7 @@ def save_mug_shots(inmates):
     Args:
         inmates: List of Inmate objects to be processed.
     """
-    path = 'mugs/'
-    # Make mugs/ folder
+    path = staticconf.read('path.mug_shot_dir')
     try:
         os.makedirs(path)
     except OSError as e:
@@ -43,7 +41,7 @@ def save_mug_shots(inmates):
             continue
         # Check if there is already a mug shot for this inmate
         try:
-            old_size = os.path.getsize(path + inmate.id + '.jpg')
+            old_size = os.path.getsize(os.path.join(path, inmate.id + '.jpg'))
             if old_size == len(inmate.mug):
                 log.debug(
                     'Skipping already saved mug shot (ID: %s)',
@@ -63,18 +61,22 @@ def save_mug_shots(inmates):
                     'Saving mug shot under alternate filename (ID: %s)',
                     inmate.id,
                 )
-                location = '{path}{inmate_id}_{timestamp}.jpg'.format(
-                    path=path,
-                    inmate_id=inmate.id,
-                    timestamp=datetime.datetime.now().strftime('%y%m%d%H%M%S'),
+                location = os.path.join(
+                    path,
+                    '{inmate_id}_{timestamp}.jpg'.format(
+                        inmate_id=inmate.id,
+                        timestamp=datetime.datetime.now().strftime(
+                            '%y%m%d%H%M%S',
+                        ),
+                    ),
                 )
         except OSError as e:
             # No such file
             if e.errno == errno.ENOENT:
                 old_size = None
-                location = '{path}{inmate_id}.jpg'.format(
-                    path=path,
-                    inmate_id=inmate.id,
+                location = os.path.join(
+                    path,
+                    '{inmate_id}.jpg'.format(inmate_id=inmate.id),
                 )
             else:
                 raise
@@ -98,10 +100,10 @@ def log_inmates(inmates, recent=False, mode='a'):
             is representative of the inmates seen during the last check.
     """
     if recent:
-        location = RECENT_LOG_FILENAME
+        location = staticconf.read('path.recent_inmate_log')
         mode = 'w'
     else:
-        location = LOG_FILENAME
+        location = staticconf.read('path.inmate_log')
     if recent:
         log_function = log.debug
     else:
@@ -131,9 +133,9 @@ def read_log(recent=False):
     :rtype: list of dict
     """
     if recent:
-        location = RECENT_LOG_FILENAME
+        location = staticconf.read('path.recent_inmate_log')
     else:
-        location = LOG_FILENAME
+        location = staticconf.read('path.inmate_log')
     log.debug(
         'Reading inmates from {log_name} log'.format(
             log_name='recent' if recent else 'standard',
@@ -160,7 +162,7 @@ def most_recent_mug(inmate):
         inmates: List of Inmate objects to be processed.
     """
     best = ''
-    for filename in os.listdir('mugs/'):
+    for filename in os.listdir(staticconf.read('path.mug_shot_dir')):
         # First conditional is for the original filename. The second
         # conditional is for newer timestamps.
         if (fnmatch.fnmatch(filename, '{}.jpg'.format(inmate.id)) or
@@ -190,7 +192,7 @@ def get_most_inmates_count():
     """
     most_count, on_date = (None, None)
     try:
-        with open('dentonpolice_most.txt', mode='r') as f:
+        with open(staticconf.read('path.most_inmate_count'), mode='r') as f:
             (most_count, on_date) = f.read().split('\n')
             most_count = int(most_count)
     except IOError as e:
@@ -208,5 +210,5 @@ def log_most_inmates_count(count):
     """Logs to file the most-count and the current date."""
     now = now = datetime.datetime.now().strftime('%m/%d/%y %H:%M:%S')
     log.info('Logging most inmates count at %s on %s', count, now)
-    with open('dentonpolice_most.txt', mode='w') as f:
+    with open(staticconf.read('path.most_inmate_count'), mode='w') as f:
         f.write('{}\n{}'.format(count, now))

@@ -12,7 +12,7 @@ class TestShouldThrottle(object):
 
     @pytest.fixture
     def app_config(self, request):
-        mock_config = {}
+        mock_config = {'path.recent_report_html': mock.ANY}
         mock_configuration = staticconf.testing.MockConfiguration(mock_config)
         mock_configuration.setup()
         request.addfinalizer(mock_configuration.teardown)

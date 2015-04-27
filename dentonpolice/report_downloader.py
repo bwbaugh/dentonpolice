@@ -22,15 +22,15 @@ from dentonpolice import storage
 from dentonpolice import twitter
 
 
-_RECENT_HTML_FNAME = 'dentonpolice_recent.html'
-
 log = logging.getLogger(__name__)
 
 
 def _should_throttle(at_time):
     minimum_report_time = at_time - staticconf.read('minimum_report_age_s')
     try:
-        last_report_time = os.path.getmtime(_RECENT_HTML_FNAME)
+        last_report_time = os.path.getmtime(
+            staticconf.read('path.recent_report_html'),
+        )
     except OSError:
         log.warning('No recent report, so not throttling.')
         return False
@@ -64,7 +64,11 @@ def main(bucket):
     if html is None:
         # Without a report, there is nothing to do.
         return
-    with open(_RECENT_HTML_FNAME, mode='w', encoding='utf-8') as f:
+    with open(
+        staticconf.read('path.recent_report_html'),
+        mode='w',
+        encoding='utf-8',
+    ) as f:
         # Useful for debugging to have a copy of the last seen page.
         # Also used to throttle automatic restarts.
         f.write(html)
