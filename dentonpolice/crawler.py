@@ -81,6 +81,13 @@ def main(bucket):
         )
     # Parse list of inmates from webpage
     inmates = jail.parse_inmates(html)
+    # Get mug shots for every current inmate. (GH-12)
+    try:
+        jail.get_mug_shots(inmates=inmates, bucket=bucket)
+    except (http.client.HTTPException, urllib.error.URLError) as error:
+        log.warning('Other error while getting mug shots: %r', error)
+        return None
+    storage.save_mug_shots(inmates)
     # Make a copy of the current parsed inmates to use later
     inmates_original = inmates[:]
     inmates = inmate_module.extract_inmates_to_process(
@@ -92,19 +99,6 @@ def main(bucket):
     )
     # We now have our final list of inmates, so let's process them.
     if inmates:
-        try:
-            jail.get_mug_shots(inmates=inmates, bucket=bucket)
-        except urllib.error.HTTPError as error:
-            log.warning(
-                'HTTP %r error while getting mug shots: %r',
-                error.code,
-                error,
-            )
-            return None
-        except (http.client.HTTPException, urllib.error.URLError) as error:
-            log.warning('Other error while getting mug shots: %r', error)
-            return None
-        storage.save_mug_shots(inmates)
         # Discard inmates that we couldn't save a mug shot for.
         inmates = [inmate for inmate in inmates if inmate.mug]
         # Log and post to Twitter.
