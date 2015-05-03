@@ -145,3 +145,13 @@ def main(bucket):
             )
             # Only log if we published the record.
             storage.log_most_inmates_count(count)
+    # TODO(bwbaugh#GH-13|2015-05-03): Tweet any updated inmates.
+    inmate_module.extract_updated_inmates(
+        inmates=[
+            inmate
+            for inmate in inmates_original
+            # Only consider inmates that don't look new, and only those
+            #   that have a mug shot.
+            if inmate not in inmates and inmate.mug
+        ],
+    )

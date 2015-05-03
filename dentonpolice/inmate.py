@@ -285,3 +285,68 @@ def find_missing(inmates, recent_inmates):
     for inmate in missing:
         log.debug('Inmate that is now missing: %s', inmate)
     return missing
+
+
+def extract_updated_inmates(inmates):
+    """Find those inmates that have changed since their last tweet.
+
+    Currently only looks at whether or not the mug shot has changed.
+
+    :param inmates: The inmates to check to see if they have changed.
+    :type inmates: list of Inmate
+
+    :returns: The inmates that have been updated, along with a link to
+        the tweet that was last posted for the inmate.
+    :rtype: list of dict
+    """
+    if not inmates:
+        return []
+    updated_inmates = []
+    all_past_records = [
+        inmate
+        for inmate in storage.read_log(recent=False)
+        if inmate.get('tweet') and inmate.get('sha1')
+    ]
+    log.debug('Loaded %d past inmates.', len(all_past_records))
+    for inmate in inmates:
+        updated_inmate = _maybe_get_updated_inmate(
+            inmate=inmate,
+            all_past_records=all_past_records,
+        )
+        if updated_inmate:
+            updated_inmates.append(updated_inmate)
+    log.info('Found %d updated inmates.', len(updated_inmates))
+    return updated_inmates
+
+
+def _maybe_get_updated_inmate(inmate, all_past_records):
+    past_records = [
+        record
+        for record in all_past_records
+        if inmate.name == record['name'] and
+        inmate.arrest == record['arrest']
+    ]
+    log.debug(
+        'Found %d past records for inmate-ID %s.',
+        len(past_records),
+        inmate.id,
+    )
+    if not past_records:
+        return None
+    most_recent_record = sorted(
+        past_records,
+        key=lambda x: datetime.datetime.strptime(
+            x['tweet']['created_at'],
+            '%a %b %d %H:%M:%S +0000 %Y',
+        ),
+        reverse=True,
+    )[0]
+    last_tweet_id = most_recent_record['tweet']['id_str']
+    log.debug('Last tweet-ID for inmate-ID %s: %s', inmate.id, last_tweet_id)
+    if inmate.sha1 == most_recent_record['sha1']:
+        log.debug('Skipping since mug shot is the same.')
+        return None
+    return {
+        'inmate': inmate,
+        'last_tweet_id': last_tweet_id,
+    }
