@@ -6,6 +6,7 @@
 # http://creativecommons.org/licenses/by-nc-sa/3.0/
 """Responsible for retrieving, parsing, logging, and posting inmates."""
 import datetime
+import io
 import logging
 import os
 import time
@@ -118,6 +119,7 @@ def main(bucket):
                         twitter.tweet_mug_shots(
                             twitter_client=twitter_client,
                             inmate=inmate,
+                            caption=twitter.get_twitter_message(inmate),
                             mug_shot_file=mug_shot_file,
                         )
         finally:
@@ -145,8 +147,7 @@ def main(bucket):
             )
             # Only log if we published the record.
             storage.log_most_inmates_count(count)
-    # TODO(bwbaugh#GH-13|2015-05-03): Tweet any updated inmates.
-    inmate_module.extract_updated_inmates(
+    updated_records = inmate_module.extract_updated_inmates(
         inmates=[
             inmate
             for inmate in inmates_original
@@ -155,3 +156,21 @@ def main(bucket):
             if inmate not in inmates and inmate.mug
         ],
     )
+    if updated_records:
+        try:
+            twitter_client = twitter.get_twitter_client()
+            if twitter_client is not None:
+                for record in updated_records:
+                    twitter.tweet_mug_shots(
+                        twitter_client=twitter_client,
+                        inmate=record['inmate'],
+                        caption='Found a newer mug shot.',
+                        mug_shot_file=io.BytesIO(record['inmate'].mug),
+                        in_reply_to_status_id=record['last_tweet_id'],
+                    )
+        finally:
+            # Still want to log even if there was an uncaught error
+            # while posting to Twitter.
+            storage.log_inmates(
+                inmates=[record['inmate'] for record in updated_records],
+            )

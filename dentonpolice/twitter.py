@@ -28,7 +28,8 @@ def get_twitter_client():
     )
 
 
-def tweet_mug_shots(twitter_client, inmate, mug_shot_file):
+def tweet_mug_shots(
+        twitter_client, inmate, caption, mug_shot_file, **tweet_params):
     """Posts to Twitter each inmate using their mug shot and caption.
 
     Args:
@@ -38,12 +39,12 @@ def tweet_mug_shots(twitter_client, inmate, mug_shot_file):
         log.info('Not posting mug shot since Twitter is disabled.')
         return
     log.info('Posting to Twitter (ID: %s)', inmate.id)
-    caption = get_twitter_message(inmate)
     log.debug('Status: {status!r}'.format(status=caption))
     try:
         inmate.tweet = twitter_client.update_status_with_media(
             status=caption,
             media=mug_shot_file,
+            **tweet_params
         )
     except Exception as error:
         inmate.posted = False
