@@ -145,7 +145,10 @@ def _save_mug_shot_to_s3(bucket, inmate):
     log.debug('Saving mugshot for inmate-ID %s to S3: %r', inmate.id, key)
     key.set_contents_from_string(
         string_data=inmate.mug,
-        headers={'Cache-Control': 'max-age=31556952, public'},
+        headers={
+            'Cache-Control': 'max-age=31556952,public',
+            'Content-Type': 'image/jpeg',
+        },
         # If we've seen this before, keep the original timestamp.
         replace=False,
         policy='public-read',
