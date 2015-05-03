@@ -5,6 +5,7 @@
 # To view a copy of this license, visit:
 # http://creativecommons.org/licenses/by-nc-sa/3.0/
 """Code related to the representation of inmates."""
+import datetime
 import hashlib
 import json
 import logging
@@ -97,6 +98,10 @@ class Inmate(object):
             return None
         hash_object = hashlib.sha1(self.mug)
         return hash_object.hexdigest()
+
+    @staticmethod
+    def sort_key_for_arrest(inmate):
+        return datetime.datetime.strptime(inmate.arrest, '%m/%d/%Y %H:%M:%S')
 
     @classmethod
     def from_dict(cls, data):

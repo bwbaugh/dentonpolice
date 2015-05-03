@@ -111,7 +111,11 @@ def main(bucket):
         try:
             twitter_client = twitter.get_twitter_client()
             if twitter_client is not None:
-                for inmate in inmates:
+                sorted_by_arrest = sorted(
+                    inmates,
+                    key=inmate_module.Inmate.sort_key_for_arrest,
+                )
+                for inmate in sorted_by_arrest:
                     mug_shot_fname = 'mugs/{}'.format(
                         storage.most_recent_mug(inmate),
                     )
