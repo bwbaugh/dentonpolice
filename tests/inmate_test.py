@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
 import mock
+import pytest
 
 from dentonpolice import inmate
 
 
 class TestInmate(object):
 
-    def test_smoke(self):
-        # TODO(bwbaugh#GH-9|2015-04-19): Replace with real tests.
-        inmate.Inmate(
+    @pytest.fixture
+    def inmate(self):
+        return inmate.Inmate(
             id=134,
-            name='John Smith',
+            name='SMITH, JOHN',
             DOB='1901/01/01',
             arrest='2015/04/19 22:41:40',
             seen='2015-04-19 22:42:13.123456',
@@ -22,6 +23,9 @@ class TestInmate(object):
                 }
             ],
         )
+
+    def test_smoke(self, inmate):
+        assert inmate.first_name == 'John'
 
     def test_sort_by_arrest(self):
         # Given a list of inmates not sorted by arrest time

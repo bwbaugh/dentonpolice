@@ -83,6 +83,14 @@ class Inmate(object):
         self.tweet = None
 
     @property
+    def first_name(self):
+        last_name, first_name = [
+            name.strip()
+            for name in self.name.title().split(',', 1)
+        ]
+        return first_name
+
+    @property
     def git_hash(self):
         """The SHA1 git-hash of the `mug` attribute."""
         # TODO(bwbaugh|2014-06-28): Decide and keep only one hash.

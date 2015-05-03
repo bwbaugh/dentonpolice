@@ -164,7 +164,9 @@ def main(bucket):
                     twitter.tweet_mug_shots(
                         twitter_client=twitter_client,
                         inmate=record['inmate'],
-                        caption='Found a newer mug shot.',
+                        caption='Found a newer mug shot for {name}.'.format(
+                            name=record['inmate'].first_name,
+                        ),
                         mug_shot_file=io.BytesIO(record['inmate'].mug),
                         in_reply_to_status_id=record['last_tweet_id'],
                     )

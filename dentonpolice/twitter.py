@@ -72,10 +72,6 @@ def get_twitter_message(inmate):
     # Append arrest time
     parts.append(inmate.arrest)
     # Append first name with age
-    last_name, first_name = [
-        name.strip()
-        for name in inmate.name.title().split(',', 1)
-    ]
     birth_date = datetime.datetime.strptime(inmate.DOB, '%m/%d/%Y')
     arrest_date = datetime.datetime.strptime(
         inmate.arrest,
@@ -84,7 +80,7 @@ def get_twitter_message(inmate):
     age = int((arrest_date - birth_date).days / 365.2425)
     parts.append(
         '{first_name}, {age} yrs old {zodiac}'.format(
-            first_name=first_name,
+            first_name=inmate.first_name,
             age=age,
             zodiac=zodiac.zodiac_emoji_for_date(birth_date)
         )
