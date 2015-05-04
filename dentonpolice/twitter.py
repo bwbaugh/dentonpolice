@@ -40,6 +40,14 @@ def tweet_mug_shots(
         return
     log.info('Posting to Twitter (ID: %s)', inmate.id)
     log.debug('Status: {status!r}'.format(status=caption))
+
+    tweet_params.setdefault('display_coordinates', True)
+    # "Denton, TX".
+    tweet_params.setdefault('place_id', 'f77b0bf942a40070')
+    # City of Denton Jail / Denton Police Department
+    tweet_params.setdefault('lat', 33.21481)
+    tweet_params.setdefault('long', -97.125291)
+
     try:
         inmate.tweet = twitter_client.update_status_with_media(
             status=caption,
