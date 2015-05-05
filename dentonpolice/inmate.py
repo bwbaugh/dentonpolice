@@ -229,6 +229,10 @@ def find_missing(inmates, recent_inmates):
         A list of inmates that appear to be missing and that were
         likely not logged during previous page checks.
     """
+    if not recent_inmates:
+        log.debug('Skipping find-missing check since no recent inmates.')
+        return []
+    all_past_records = _get_all_past_records()
     # Since we try not to log inmates that don't have charges listed,
     # make sure that any inmate on the recent list that doesn't appear
     # on the current page get logged even if they don't have charges.
@@ -247,6 +251,14 @@ def find_missing(inmates, recent_inmates):
         elif (len(recent.charges) == 1 and
               re.search(r'WARRANT(?:S)?\Z', recent.charges[0]['charge'])):
             log.debug('Recent inmate-ID %s has one warrant.', recent.id)
+            potential = True
+        elif (
+            not _get_past_records(
+                inmate=recent,
+                all_past_records=all_past_records,
+            )
+        ):
+            log.debug('Recent inmate-ID %s has no prior tweet.', recent.id)
             potential = True
         # add if the inmate is missing from the current report or if
         # the inmate has had their charge updated.
@@ -295,6 +307,31 @@ def find_missing(inmates, recent_inmates):
     return missing
 
 
+def _get_all_past_records():
+    all_past_records = [
+        inmate
+        for inmate in storage.read_log(recent=False)
+        if inmate.get('tweet') and inmate.get('sha1')
+    ]
+    log.debug('Loaded %d past inmates.', len(all_past_records))
+    return all_past_records
+
+
+def _get_past_records(inmate, all_past_records):
+    past_records = [
+        record
+        for record in all_past_records
+        if inmate.name == record['name'] and
+        inmate.arrest == record['arrest']
+    ]
+    log.debug(
+        'Found %d past records for inmate-ID %s.',
+        len(past_records),
+        inmate.id,
+    )
+    return past_records
+
+
 def extract_updated_inmates(inmates):
     """Find those inmates that have changed since their last tweet.
 
@@ -311,12 +348,7 @@ def extract_updated_inmates(inmates):
     if not inmates:
         return []
     updated_inmates = []
-    all_past_records = [
-        inmate
-        for inmate in storage.read_log(recent=False)
-        if inmate.get('tweet') and inmate.get('sha1')
-    ]
-    log.debug('Loaded %d past inmates.', len(all_past_records))
+    all_past_records = _get_all_past_records()
     for inmate in inmates:
         updated_inmate = _maybe_get_updated_inmate(
             inmate=inmate,
@@ -329,16 +361,9 @@ def extract_updated_inmates(inmates):
 
 
 def _maybe_get_updated_inmate(inmate, all_past_records):
-    past_records = [
-        record
-        for record in all_past_records
-        if inmate.name == record['name'] and
-        inmate.arrest == record['arrest']
-    ]
-    log.debug(
-        'Found %d past records for inmate-ID %s.',
-        len(past_records),
-        inmate.id,
+    past_records = _get_past_records(
+        inmate=inmate,
+        all_past_records=all_past_records,
     )
     if not past_records:
         return None
