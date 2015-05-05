@@ -40,6 +40,9 @@ def main(bucket):
     if _should_throttle(at_time=time.time()):
         return
     html = _get_jail_report(bucket=bucket)
+    if html is None:
+        # Without a report, there is nothing to do.
+        return
     # Parse list of inmates from webpage
     inmates = jail.parse_inmates(html)
     # Get mug shots for every current inmate. (GH-12)
