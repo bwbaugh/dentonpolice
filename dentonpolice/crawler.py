@@ -60,7 +60,10 @@ def main(bucket):
     )
     _publish_new_inmates(inmates=inmates, inmates_original=inmates_original)
     _publish_record_count(inmates=inmates_original)
-    _publish_updated_inmates(inmates=inmates_original)
+    _publish_updated_inmates(
+        inmates=inmates,
+        inmates_original=inmates_original,
+    )
 
 
 def _should_throttle(at_time):
@@ -171,11 +174,11 @@ def _publish_record_count(inmates):
     storage.log_most_inmates_count(count)
 
 
-def _publish_updated_inmates(inmates):
+def _publish_updated_inmates(inmates, inmates_original):
     updated_records = inmate_module.extract_updated_inmates(
         inmates=[
             inmate
-            for inmate in inmates
+            for inmate in inmates_original
             # Only consider inmates that don't look new, and only those
             #   that have a mug shot.
             if inmate not in inmates and inmate.mug

@@ -307,6 +307,7 @@ def extract_updated_inmates(inmates):
         the tweet that was last posted for the inmate.
     :rtype: list of dict
     """
+    log.debug('Looking for updated inmates in list of length %d', len(inmates))
     if not inmates:
         return []
     updated_inmates = []
