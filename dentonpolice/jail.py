@@ -79,7 +79,12 @@ def save_jail_report_to_s3(bucket, html, timestamp):
         name=_make_jail_report_key_name(timestamp=timestamp),
     )
     log.debug('Saving report to key: %r', key)
-    key.set_contents_from_string(string_data=html)
+    key.set_contents_from_string(
+        string_data=html,
+        headers={
+            'Content-Type': 'text/html',
+        },
+    )
     log.info('Saved jail report to S3: %r', key)
     return key.name
 
