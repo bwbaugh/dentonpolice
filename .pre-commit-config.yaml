@@ -1,5 +1,5 @@
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    sha: cedcea550c495d536247ca23115035b17074cac7
+    sha: cf550fcab3f12015f8676b8278b30e1a5bc10e70
     hooks:
     -   id: autopep8-wrapper
         args:
@@ -15,13 +15,13 @@
     -   id: requirements-txt-fixer
     -   id: flake8
     -   id: name-tests-test
-        files: ^test*/.+\.py$
+        files: ^test.+\.py$
     -   id: trailing-whitespace
 -   repo: https://github.com/asottile/reorder_python_imports
     sha: 3d86483455ab5bd06cc1069fdd5ac57be5463f10
     hooks:
     -   id: reorder-python-imports
 -   repo: https://github.com/pre-commit/pre-commit
-    sha: cdf726bbedb15f33ca60fdc397fec379946755fc
+    sha: 2a642b0619b76cbe1a4d217ec5f9e513dd4e4c08
     hooks:
     -   id: validate_config
