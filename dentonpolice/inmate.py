@@ -351,15 +351,16 @@ def _filter_inmates(inmates, recent_inmates):
                 inmate.charges[0]['charge'],
             )
             continue
-        if any(
-            (recent.id == inmate.id) and
-            (len(recent.charges) <= len(inmate.charges))
-            for recent in recent_inmates
-        ):
+        recent = _find_matching_recent(
+            inmate=inmate,
+            recent_inmates=recent_inmates,
+        )
+        if recent and len(recent.charges) <= len(inmate.charges):
             log.debug(
-                'Inmate-ID %s has %s charges, and that many or less before.',
+                'Inmate-ID %s has %s charges now, and %s charges before.',
                 inmate.id,
                 len(inmate.charges),
+                len(recent.charges),
             )
             continue
         filtered_inmates.append(inmate)
@@ -369,6 +370,13 @@ def _filter_inmates(inmates, recent_inmates):
         len(filtered_inmates),
     )
     return filtered_inmates
+
+
+def _find_matching_recent(inmate, recent_inmates):
+    for recent in recent_inmates:
+        if recent.id == inmate.id:
+            return recent
+    return None
 
 
 def extract_updated_inmates(inmates):
