@@ -184,23 +184,16 @@ def extract_inmates_to_process(inmates, recent_inmates):
     :type recent_inmates: list
     """
     # Find inmates that no longer appear on the page that may not be logged.
-    missing = find_missing(inmates, recent_inmates)
+    missing = _find_missing(inmates=inmates, recent_inmates=recent_inmates)
     # Discard recent inmates with no charges listed
+    num_recent_inmates_original = len(recent_inmates)
     recent_inmates = [recent for recent in recent_inmates if recent.charges]
-    # Compare the current list with the list read last time (recent) and
-    # get rid of duplicates (already logged inmates). Also discard inmates
-    # that have no charges listed, or if the only charge is
-    # 'LOCAL MUNICIPAL WARRANT'.
-    # TODO(bwbaugh): Make this readable by converting to proper for-loopps.
-    inmates = [inmate for inmate in inmates
-               if inmate.charges and
-               not (len(inmate.charges) == 1 and
-                    re.search(r'WARRANT(?:S)?\Z', inmate.charges[0]['charge']))
-               and not any((recent.id == inmate.id) and
-                           (len(recent.charges) <= len(inmate.charges))
-                           for recent in recent_inmates)]
-    # Add to the current list those missing ones without charges that
-    # also need to be logged.
+    log.debug(
+        'Discarded %s recent inmates without charges.',
+        num_recent_inmates_original - len(recent_inmates),
+    )
+    inmates = _filter_inmates(inmates=inmates, recent_inmates=recent_inmates)
+    # Missing ones without charges also need to be logged.
     inmates.extend(missing)
     # Double check that there are no duplicates.
     # Note: this is needed due to programming logic error, but the code
@@ -217,7 +210,7 @@ def extract_inmates_to_process(inmates, recent_inmates):
     return inmates
 
 
-def find_missing(inmates, recent_inmates):
+def _find_missing(inmates, recent_inmates):
     """Find inmates that no longer appear on the page that may not be logged.
 
     Args:
@@ -330,6 +323,52 @@ def _get_past_records(inmate, all_past_records):
         inmate.id,
     )
     return past_records
+
+
+def _filter_inmates(inmates, recent_inmates):
+    """Filter out inmates that shouldn't be processed.
+
+    Compares the current list with the list read last time (recent) and
+    gets rid of duplicates (already logged inmates).
+
+    Some inmates are likely to be updated in the future, so this also
+    discards inmates that have no charges listed, or if the only charge
+    is 'LOCAL MUNICIPAL WARRANT'.
+    """
+    log.debug('Filtering from list of %s inmates.', len(inmates))
+    filtered_inmates = []
+    for inmate in inmates:
+        if not inmate.charges:
+            log.debug('Inmate-ID %s has no charges.', inmate.id)
+            continue
+        if (
+            len(inmate.charges) == 1 and
+            re.search(r'WARRANT(?:S)?\Z', inmate.charges[0]['charge'])
+        ):
+            log.debug(
+                'Inmate-ID %s has a single generic charge: %s',
+                inmate.id,
+                inmate.charges[0]['charge'],
+            )
+            continue
+        if any(
+            (recent.id == inmate.id) and
+            (len(recent.charges) <= len(inmate.charges))
+            for recent in recent_inmates
+        ):
+            log.debug(
+                'Inmate-ID %s has %s charges, and that many or less before.',
+                inmate.id,
+                len(inmate.charges),
+            )
+            continue
+        filtered_inmates.append(inmate)
+    log.debug(
+        'Filtered out %s inmates, leaving %s.',
+        len(inmates) - len(filtered_inmates),
+        len(filtered_inmates),
+    )
+    return filtered_inmates
 
 
 def extract_updated_inmates(inmates):
