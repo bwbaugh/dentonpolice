@@ -9,6 +9,7 @@ import boto.s3.key
 import http.client
 import staticconf
 
+from dentonpolice import util
 from dentonpolice.inmate import Inmate
 
 
@@ -48,19 +49,23 @@ def get_jail_report():
     log.info('Getting Jail Report')
     opener = _get_opener()
     try:
-        response = opener.open('http://dpdjailview.cityofdenton.com/')
+        with util.timeout(seconds=staticconf.read('timeout.open_jail_report')):
+            response = opener.open('http://dpdjailview.cityofdenton.com/')
         log.debug('Reading jail report page')
         html = response.read().decode('utf-8')
     except urllib.error.HTTPError as error:
+        html = None
         log.warning(
             'HTTP %r error while getting jail report: %r',
             error.code,
             error,
         )
-        return None
     except (http.client.HTTPException, urllib.error.URLError) as error:
+        html = None
         log.warning('Other error while getting jail report: %r', error)
-        return None
+    except TimeoutError:
+        html = None
+        log.warning('Timeout while getting jail report.')
     return html
 
 
@@ -119,7 +124,10 @@ def get_mug_shots(inmates, bucket):
             'ImageHandler.ashx?type=image&imageID={mug_id}'
         ).format(mug_id=inmate.id)
         try:
-            response = opener.open(uri)
+            with util.timeout(
+                seconds=staticconf.read('timeout.open_one_mug_shot'),
+            ):
+                response = opener.open(uri)
             image_data = response.read()
         except urllib.error.HTTPError as e:
             log.warning(
@@ -127,6 +135,12 @@ def get_mug_shots(inmates, bucket):
                 inmate.id,
                 e.code,
                 e,
+            )
+            continue
+        except TimeoutError:
+            log.warning(
+                'Timeout while getting mug shot for inmate-ID %s.',
+                inmate.id,
             )
             continue
         inmate.mug = image_data

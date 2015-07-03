@@ -5,6 +5,13 @@
 #   throttling automatic restarts from process supervisors.
 minimum_report_age_s: 240
 
+# Maximum number of seconds before raising a TimeoutError. (GH-16)
+timeout:
+  # When retrieving the HTML report. Normally finishes within 30 seconds.
+  open_jail_report: 300
+  # When opening the mugshot URL. Normally finishes within 30 seconds.
+  open_one_mug_shot: 300
+
 path:
   inmate_log: dentonpolice_log.json
   most_inmate_count: dentonpolice_most.txt

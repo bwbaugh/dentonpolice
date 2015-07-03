@@ -95,7 +95,7 @@ def _get_jail_report(bucket):
     html = jail.get_jail_report()
     if html is None:
         # Without a report, there is nothing to do.
-        return
+        return None
     with open(
         staticconf.read('path.recent_report_html'),
         mode='w',

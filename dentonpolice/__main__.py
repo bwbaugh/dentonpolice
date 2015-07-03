@@ -89,6 +89,7 @@ while True:
     except SystemExit:
         raise
     except:
+        log.warning('Sending uncaught exception to Sentry.')
         ident = sentry_client.get_ident(sentry_client.captureException())
-        log.info('Uncaught exception ident: %s', ident)
+        log.warning('Uncaught exception ident: %s', ident)
         raise
