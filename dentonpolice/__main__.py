@@ -27,8 +27,8 @@ import raven.conf
 import raven.handlers.logging
 import staticconf
 
-from dentonpolice import config
-from dentonpolice import crawler
+from . import config
+from . import crawler
 
 
 # How often to check the City Jail Custody Report webpage

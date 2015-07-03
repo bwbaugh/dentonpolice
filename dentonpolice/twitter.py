@@ -8,7 +8,7 @@ import re
 import staticconf
 from twython import Twython
 
-from dentonpolice import zodiac
+from . import zodiac
 
 
 log = logging.getLogger(__name__)

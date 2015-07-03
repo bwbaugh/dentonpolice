@@ -17,10 +17,10 @@ import urllib.request
 import http.client
 import staticconf
 
-from dentonpolice import inmate as inmate_module
-from dentonpolice import jail
-from dentonpolice import storage
-from dentonpolice import twitter
+from . import inmate as inmate_module
+from . import jail
+from . import storage
+from . import twitter
 
 
 log = logging.getLogger(__name__)

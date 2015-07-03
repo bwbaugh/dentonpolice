@@ -9,8 +9,8 @@ import boto.s3.key
 import http.client
 import staticconf
 
-from dentonpolice import util
-from dentonpolice.inmate import Inmate
+from . import util
+from .inmate import Inmate
 
 
 log = logging.getLogger(__name__)

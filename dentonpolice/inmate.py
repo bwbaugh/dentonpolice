@@ -11,8 +11,8 @@ import json
 import logging
 import re
 
-from dentonpolice import storage
-from dentonpolice.util import git_hash
+from . import storage
+from .util import git_hash
 
 
 log = logging.getLogger(__name__)
