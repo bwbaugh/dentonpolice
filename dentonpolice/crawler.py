@@ -47,7 +47,11 @@ def main(bucket):
         return
     # Parse list of inmates from webpage
     inmates = jail.parse_inmates(html)
-    log.info('Jail report contains %s inmates.', len(inmates))
+    log.info(
+        'Jail report contains %s inmates: %s',
+        len(inmates),
+        [inmate.id for inmate in inmates],
+    )
     # Get mug shots for every current inmate. (GH-12)
     try:
         jail.get_mug_shots(inmates=inmates, bucket=bucket)
