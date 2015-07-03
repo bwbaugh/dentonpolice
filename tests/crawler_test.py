@@ -26,15 +26,16 @@ class TestShouldThrottle(object):
         return mock_instance
 
     @pytest.mark.parametrize(
-        argnames='last_report_time,at_time,min_report_age,should_throttle',
+        argnames='last_report_time,at_time,min_report_age,throttle_seconds',
         argvalues=[
-            (1, 5, 5, True),
-            (1, 6, 5, False),
-            (1, 7, 5, False),
+            (1, 4, 5, 2),
+            (1, 5, 5, 1),
+            (1, 6, 5, 0),
+            (1, 7, 5, 0),
         ],
     )
     def test_throttle_if_last_report_old_enough(
-            self, last_report_time, at_time, min_report_age, should_throttle,
+            self, last_report_time, at_time, min_report_age, throttle_seconds,
             app_config, mock_getmtime):
         # Given time to check for throttling is "<at_time>
         # And the last report was generated at "<last_report_time>"
@@ -45,8 +46,8 @@ class TestShouldThrottle(object):
         )
         # When we check if we should throttle due to the last report time
         result = crawler._should_throttle(at_time=at_time)
-        # Then the result should be "<should_throttle>"
-        assert result is should_throttle
+        # Then the result should be "<throttle_seconds>"
+        assert result == throttle_seconds
 
     def test_never_throttle_if_no_last_report(self, app_config, mock_getmtime):
         # Given the program has never generated a report before
@@ -55,4 +56,4 @@ class TestShouldThrottle(object):
         # When we check if we should throttle due to the last report time
         result = crawler._should_throttle(at_time=0)
         # Then we should not throttle
-        assert result is False
+        assert result == 0

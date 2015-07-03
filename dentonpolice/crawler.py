@@ -37,8 +37,10 @@ def main(bucket):
     4.  Save a log.
     5.  Upload to Twitter.
     """
-    if _should_throttle(at_time=time.time()):
-        return
+    throttle_seconds = _should_throttle(at_time=time.time())
+    if throttle_seconds:
+        log.info('Throttling for %s seconds.', throttle_seconds)
+        time.sleep(throttle_seconds)
     html = _get_jail_report(bucket=bucket)
     if html is None:
         # Without a report, there is nothing to do.
@@ -71,25 +73,27 @@ def main(bucket):
 
 
 def _should_throttle(at_time):
-    minimum_report_time = at_time - staticconf.read('minimum_report_age_s')
+    minimum_report_age_s = staticconf.read('minimum_report_age_s')
+    minimum_report_time = at_time - minimum_report_age_s
     try:
         last_report_time = os.path.getmtime(
             staticconf.read('path.recent_report_html'),
         )
     except OSError:
         log.warning('No recent report, so not throttling.')
-        return False
+        return 0
     if minimum_report_time < last_report_time:
+        last_report_relative_s = int(at_time - last_report_time)
         log.info(
             (
                 'Throttling since last report was generated %d s ago, '
                 'which is less than %d s.'
             ),
-            int(at_time - last_report_time),
-            staticconf.read('minimum_report_age_s'),
+            last_report_relative_s,
+            minimum_report_age_s,
         )
-        return True
-    return False
+        return minimum_report_age_s - last_report_relative_s
+    return 0
 
 
 def _get_jail_report(bucket):
