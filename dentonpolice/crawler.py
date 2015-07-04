@@ -127,6 +127,7 @@ def _publish_new_inmates(inmates, inmates_original):
     """Log and post to Twitter."""
     # Discard inmates that we couldn't save a mug shot for.
     inmates = [inmate for inmate in inmates if inmate.mug]
+    log.info('Publishing %s new inmates.', len(inmates))
     if not inmates:
         return
     sorted_by_arrest = sorted(
@@ -196,6 +197,7 @@ def _publish_updated_inmates(inmates, inmates_original):
             if inmate not in inmates and inmate.mug
         ],
     )
+    log.info('Publishing %s updated inmates.', len(updated_records))
     if not updated_records:
         return
     twitter_client = twitter.get_twitter_client()
