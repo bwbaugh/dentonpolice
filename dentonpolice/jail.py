@@ -172,7 +172,6 @@ def _save_mug_shot_to_s3(bucket, inmate):
         replace=False,
         policy='public-read',
     )
-    log.info('Saved mugshot for inmate-ID %s to S3: %r', inmate.id, key)
 
 
 def parse_inmates(html):
