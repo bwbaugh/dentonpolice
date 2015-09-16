@@ -139,7 +139,7 @@ def get_mug_shots(inmates, bucket):
             continue
         except http.client.BadStatusLine as e:
             log.warning(
-                    'Unable to retrieve inmate-ID %s: %r',
+                'Unable to retrieve inmate-ID %s: %r',
                 inmate.id,
                 e,
             )
