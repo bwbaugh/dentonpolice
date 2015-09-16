@@ -137,6 +137,13 @@ def get_mug_shots(inmates, bucket):
                 e,
             )
             continue
+        except http.client.BadStatusLine as e:
+            log.warning(
+                    'Unable to retrieve inmate-ID %s: %r',
+                inmate.id,
+                e,
+            )
+            continue
         except TimeoutError:
             log.warning(
                 'Timeout while getting mug shot for inmate-ID %s.',
