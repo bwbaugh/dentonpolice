@@ -14,7 +14,10 @@ from . import zodiac
 log = logging.getLogger(__name__)
 
 URL_LENGTH = 23  # Assume HTTPS, otherwise HTTP is 22.
-TWEET_LIMIT = 140 - URL_LENGTH  # The mug shot is included as a link.
+# Should probably get this from the `help/configuration` endpoint
+#   instead of hard coding it. See `characters_reserved_per_media`.
+MEDIA_URL_LENGTH = 24
+TWEET_LIMIT = 140 - MEDIA_URL_LENGTH  # The mug shot is included as a link.
 
 
 def get_twitter_client():
